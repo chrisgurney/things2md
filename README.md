@@ -58,6 +58,9 @@ Show uncompleted tasks, tagged with "import", formatted in markdown with task na
 
 This script was designed for use in Obsidian for Daily Notes, but as it outputs plain text as markdown, it really can be used anywhere you can run a Python script.
 
-Execute from Obsidian with the shell commands community plugin. Recommended configuration as follows:
+I call this script via the [shell commands community plugin](https://github.com/Taitava/obsidian-shellcommands). Recommended configuration as follows:
 
-- Output at cursor position
+1. Add the command per the above example. Make sure your path to the things2md.py script is absolute.
+1. Click the gear icon for each command, and adjust these settings:
+    - In the _General_ tab, set an alias for the command. For example, _tasks_today_ (You'll execute this from a slash command.)
+    - In the _Output_ tab, under _Output channel for stdout_ set it to _Current file: caret position_
