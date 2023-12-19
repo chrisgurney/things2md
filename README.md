@@ -29,7 +29,7 @@ Note that nothing will be returned of no tasks match the given arguments.
 
 # Examples
 
-## Completed Tasks
+## Listing Completed Tasks
 
 Show tasks completed within the last week, grouped by project, ordered by project:
 ```
@@ -66,7 +66,7 @@ Show tasks completed in the last week, ordered by project, but omit subtasks, no
 python3 things2md.py --range "1 week ago" --orderby project --simple
 ```
 
-## Todo Tasks
+## Listing Todo Tasks
 
 _To narrow down tasks to be done, I tag them with a special tag and retrieve just those tasks:_
 
@@ -75,7 +75,7 @@ Show uncompleted tasks, tagged with "focus", ordered how they're ordered by inde
 python3 things2md.py --tag "focus" --orderby index --gcallinks
 ```
 
-## Tasks as Content to be Exported (into Obsidian, or another note-taking tool)
+## Exporting Tasks as Simple Markdown to be Imported (into Obsidian, or another note-taking tool)
 
 _I frequently draft content in Things and just want to get it out as simple markdown:_
 
@@ -95,6 +95,6 @@ I call this script via the [shell commands community plugin](https://github.com/
     - In the _General_ tab, set an alias for the command. For example, _tasks_today_ (You'll execute this from a slash command.)
     - In the _Output_ tab, under _Output channel for stdout_ set it to _Current file: caret position_
 
-# FUTURE IDEAS
+# Future Ideas
 
 - I have attempted to get just the tasks that are in today's list, but I haven't figured out how to do that yet. My current workflow (or workaround, depending on your needs) is to tag tasks to be fetched using the `--tag` argument.
