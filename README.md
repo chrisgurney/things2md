@@ -25,34 +25,54 @@ Run without any parameters to see the full list of arguments available:
 
 Only the `range` or `tag` parameter is required, at a minimum.
 
+Note that nothing will be returned of no tasks match the given arguments.
+
 # Examples
 
 Show tasks completed within the last week, grouped by project, ordered by project:
-`python3 things2md.py --range "1 week ago" --groupby project --orderby project`
+```
+python3 things2md.py --range "1 week ago" --groupby project --orderby project
+```
 
 Show tasks completed today:
-`python3 things2md.py --range "today"`
+```
+python3 things2md.py --range "today"
+```
 
 Show tasks completed today, and omit subtasks, notes, and cancelled tasks:
-`python3 things2md.py --range "today" --simple`
+```
+python3 things2md.py --range "today" --simple
+```
 
 Show tasks completed yesterday:
-`python3 things2md.py --range "yesterday"`
+```
+python3 things2md.py --range "yesterday"
+```
 
 ...and ordered by project, but omit subtasks, notes, and cancelled tasks:
-`python3 things2md.py --range "yesterday" --orderby project --simple`
+```
+python3 things2md.py --range "yesterday" --orderby project --simple
+```
 
 Show tasks completed in the last 3 days, and omit subtasks, notes, and cancelled tasks:
-`python3 things2md.py --range "3 days ago" --simple`
+```
+python3 things2md.py --range "3 days ago" --simple
+```
 
 Show tasks completed in the last week, ordered by project, but omit subtasks, notes, and cancelled tasks:
-`python3 things2md.py --range "1 week ago" --orderby project --simple`
+```
+python3 things2md.py --range "1 week ago" --orderby project --simple
+```
 
 Show uncompleted tasks, tagged with "focus", ordered how they're ordered by index, and show links that you can click to create a Google Calendar event:
-`python3 things2md.py --tag "focus" --orderby index --gcallinks`
+```
+python3 things2md.py --tag "focus" --orderby index --gcallinks
+```
 
 Show uncompleted tasks, tagged with "import", formatted in markdown with task names as headers, notes as body text, and subtasks as a list:
-`python3 things2md.py --tag "import" --format import --orderby index`
+```
+python3 things2md.py --tag "import" --format import --orderby index
+```
 
 # Usage with Obsidian
 
