@@ -77,7 +77,7 @@ python3 things2md.py --tag "focus" --orderby index --gcallinks
 
 ## Exporting Tasks as Simple Markdown to be Imported (into Obsidian, or another note-taking tool)
 
-_I frequently draft content in Things and just want to get it out as simple markdown:_
+_I frequently draft notes in Things that I just want to get it out as simple markdown:_
 
 Show uncompleted tasks, tagged with "import", formatted in markdown with task names as headers, notes as body text, and subtasks as a list:
 ```
