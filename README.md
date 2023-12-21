@@ -87,7 +87,7 @@ python3 things2md.py --tag "import" --format import --orderby index
 
 # Usage with Obsidian
 
-This script was designed for use in Obsidian for Daily Notes, but as it outputs plain text as markdown, it really can be used anywhere you can run a Python script.
+This script was designed for use in [Obsidian](https://obsidian.md/) for Daily Notes, but as it outputs plain text as markdown, it really can be used anywhere you can run a Python script.
 
 I call this script via the [shell commands community plugin](https://github.com/Taitava/obsidian-shellcommands). Recommended configuration as follows:
 
@@ -99,8 +99,8 @@ I call this script via the [shell commands community plugin](https://github.com/
 # References
 
 - [things.sh](https://github.com/AlexanderWillner/things.sh) - I found this shell script late in the development of `things2md`, but it looks like another good interpretation of how to query the Things database.
-- [obsidian-things-logbook](https://github.com/liamcain/obsidian-things-logbook) - Obisidian plugin that periodically syncs the Things logook with Obsidian. This wasn't the behavior I was looking for, hence why I developed `things2md`.
+- [obsidian-things-logbook](https://github.com/liamcain/obsidian-things-logbook) - This is an [Obsidian](https://obsidian.md/) plugin that periodically syncs the Things logook with your Obsidian vault. This wasn't the behavior I was looking for, hence why I developed `things2md`.
 
 # Future Ideas
 
-- I have attempted to get just the tasks that are in today's list, but I haven't figured out how to do that yet. My current workflow (or workaround, depending on your needs) is to tag tasks to be fetched using the `--tag` argument.
+- I have attempted to get just the tasks that are in today's list, but I haven't figured out how to do that quite yet. My current workflow (or workaround, depending on your needs) is to tag tasks to be fetched using the `--tag` argument.
