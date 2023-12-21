@@ -1,4 +1,4 @@
-Things3 Logbook -> Markdown conversion script.
+Things3 database -> Markdown conversion script.
 
 # Installation
 
@@ -17,7 +17,8 @@ Run without any parameters to see the full list of arguments available:
                     How to group the tasks
 --orderby {date,index,project}
                     How to order the tasks
---range RANGE       Relative date range to get completed tasks for (e.g., "0 days ago", "1 day ago", "1 week ago")
+--range RANGE       Relative date range to get completed tasks for (e.g., "0 days ago", "1 day ago", "1 week ago"). Completed
+                        tasks are relative to midnight of the day requested.
 --simple            If set will hide task subtasks + notes and cancelled tasks
 --tag TAG           If provided, only uncompleted tasks with this tag are fetched
 --gcallinks         If provided, appends links to create a Google calendar event for the task.
@@ -94,6 +95,11 @@ I call this script via the [shell commands community plugin](https://github.com/
 1. Click the gear icon for each command, and adjust these settings:
     - In the _General_ tab, set an alias for the command. For example, _tasks_today_ (You'll execute this from a slash command.)
     - In the _Output_ tab, under _Output channel for stdout_ set it to _Current file: caret position_
+
+# References
+
+- [things.sh](https://github.com/AlexanderWillner/things.sh) - I found this shell script late in the development of `things2md`, but it looks like another good interpretation of how to query the Things database.
+- [obsidian-things-logbook](https://github.com/liamcain/obsidian-things-logbook) - Obisidian plugin that periodically syncs the Things logook with Obsidian. This wasn't the behavior I was looking for, hence why I developed `things2md`.
 
 # Future Ideas
 

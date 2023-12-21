@@ -24,13 +24,13 @@ THINGS_DB = os.getenv("THINGS_DB")
 # CLI ARGUMENTS
 # #############################################################################
 
-parser = argparse.ArgumentParser(description='Things3 Logbook -> Markdown conversion script.')
+parser = argparse.ArgumentParser(description='Things3 database -> Markdown conversion script.')
 
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information')
 parser.add_argument('--format', choices=['import'], help='Format mode. Import: Outputs tasks as headings, notes as body text, subtasks as bullets.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks')
-parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "0 days ago", "1 day ago", "1 week ago")')
+parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago"). Completed tasks are relative to midnight of the day requested.')
 parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks + notes and cancelled tasks')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched')
 parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
