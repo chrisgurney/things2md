@@ -209,14 +209,14 @@ def query_tasks(past_time):
     clause_where = ''
     if past_time != None:
         clause_where = 'AND TMTask.stopDate IS NOT NULL AND TMTask.stopDate > {} '.format(past_time)
-    if ARG_TAG != None:
+    elif ARG_TAG != None:
         clause_where = 'AND TMTag.title LIKE "%{}%" AND TMTask.stopDate IS NULL '.format(ARG_TAG)
 
     if ARG_ORDERBY == "project":
         # FIX: doesn't actually sort by name (just by ID)
         clause_orderby = 'TMTask.project ASC, TMTask.stopDate DESC'
     elif ARG_ORDERBY == "index":
-        clause_orderby = 'TMTask.[index]'
+        clause_orderby = 'TMTask.todayIndex'
     else:
         clause_orderby = 'TMTask.stopDate DESC'
 
