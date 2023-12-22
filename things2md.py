@@ -146,7 +146,7 @@ def query_projects(past_time):
     if past_time != None:
         where_clause = 'AND (p.stopDate IS NULL OR p.stopDate > {})'.format(past_time)
 
-    PROJECT_QUERY = """
+    PROJECT_QUERY = f"""
     SELECT
         p.uuid as uuid,
         p.title as project,
@@ -156,10 +156,10 @@ def query_projects(past_time):
     INNER JOIN TMTask p ON p.uuid = t.project
     WHERE
         p.trashed = 0
-        {}
+        {where_clause}
     GROUP BY
         p.uuid
-    """.format(where_clause)
+    """
 
     conn = sqlite3.connect(THINGS_DB)
     cursor = conn.cursor()
@@ -176,7 +176,7 @@ def query_subtasks(task_ids):
     Fetches subtasks given a list of task IDs.
     '''
 
-    SUBTASK_QUERY = """
+    SUBTASK_QUERY = f"""
     SELECT
         c.uuid,
         c.task,
@@ -185,10 +185,10 @@ def query_subtasks(task_ids):
     FROM
         TMChecklistItem c
     WHERE
-        c.task IN ({})
+        c.task IN ({','.join(['?']*len(task_ids))})
     ORDER BY
         c.task, [index]
-    """.format(','.join(['?']*len(task_ids)))
+    """
 
     conn = sqlite3.connect(THINGS_DB)
     cursor = conn.cursor()
@@ -206,21 +206,21 @@ def query_tasks(past_time):
     '''
 
     # FUTURE: if both args provided, why not filter on both?
-    clause_where = ''
+    where_clause = ''
     if past_time != None:
-        clause_where = 'AND TMTask.stopDate IS NOT NULL AND TMTask.stopDate > {} '.format(past_time)
+        where_clause = 'AND TMTask.stopDate IS NOT NULL AND TMTask.stopDate > {} '.format(past_time)
     elif ARG_TAG != None:
-        clause_where = 'AND TMTag.title LIKE "%{}%" AND TMTask.stopDate IS NULL '.format(ARG_TAG)
+        where_clause = 'AND TMTag.title LIKE "%{}%" AND TMTask.stopDate IS NULL '.format(ARG_TAG)
 
     if ARG_ORDERBY == "project":
         # FIX: doesn't actually sort by name (just by ID)
-        clause_orderby = 'TMTask.project ASC, TMTask.stopDate DESC'
+        orderby_clause = 'TMTask.project ASC, TMTask.stopDate DESC'
     elif ARG_ORDERBY == "index":
-        clause_orderby = 'TMTask.todayIndex'
+        orderby_clause = 'TMTask.todayIndex'
     else:
-        clause_orderby = 'TMTask.stopDate DESC'
+        orderby_clause = 'TMTask.stopDate DESC'
 
-    TASK_QUERY = """
+    TASK_QUERY = f"""
     SELECT
         TMTask.uuid as uuid,
         TMTask.title as title,
@@ -238,13 +238,13 @@ def query_tasks(past_time):
         ON TMTag.uuid = TMTaskTag.tags
     WHERE
         TMTask.trashed = 0
-        {}
+        {where_clause}
     GROUP BY
         TMTask.uuid
     ORDER BY
-        {}
-    LIMIT {}
-    """.format(clause_where,clause_orderby,QUERY_LIMIT)
+        {orderby_clause}
+    LIMIT {QUERY_LIMIT}
+    """
 
     conn = sqlite3.connect(THINGS_DB)
     cursor = conn.cursor()
