@@ -33,20 +33,22 @@ parser.add_argument('--orderby', default='date', choices=['date','index','projec
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago"). Completed tasks are relative to midnight of the day requested.')
 parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks + notes and cancelled tasks')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched')
+parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today')
 parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
 
 args = parser.parse_args()
 
 DEBUG = args.debug
+ARG_FORMAT = args.format
+ARG_GCAL_LINKS = args.gcallinks
 ARG_GROUPBY = args.groupby
 ARG_ORDERBY = args.orderby
 ARG_RANGE = args.range
 ARG_SIMPLE = args.simple # TODO: deprecate and fold into 'format' argument
-ARG_FORMAT = args.format
 ARG_TAG = args.tag
-ARG_GCAL_LINKS = args.gcallinks
+ARG_TODAY = args.today
 
-if ARG_RANGE == None and ARG_TAG == None:
+if ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY:
     parser.print_help()
     exit(0)
 
@@ -211,6 +213,8 @@ def query_tasks(past_time):
         where_clause = 'AND TMTask.stopDate IS NOT NULL AND TMTask.stopDate > {} '.format(past_time)
     elif ARG_TAG != None:
         where_clause = 'AND TMTag.title LIKE "%{}%" AND TMTask.stopDate IS NULL '.format(ARG_TAG)
+    elif ARG_TODAY:
+        where_clause = 'AND startDate IS NOT NULL AND status = 0 AND type = 0 AND start = 1'
 
     if ARG_ORDERBY == "project":
         # FIX: doesn't actually sort by name (just by ID)
