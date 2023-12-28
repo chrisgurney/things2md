@@ -28,13 +28,13 @@ parser = argparse.ArgumentParser(description='Things3 database -> Markdown conve
 
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information')
 parser.add_argument('--format', choices=['import'], help='Format mode. Import: Outputs tasks as headings, notes as body text, subtasks as bullets.')
+parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks')
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago"). Completed tasks are relative to midnight of the day requested.')
 parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks + notes and cancelled tasks')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched')
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today')
-parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
 
 args = parser.parse_args()
 
@@ -57,12 +57,6 @@ if ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY:
 # #############################################################################
 
 QUERY_LIMIT = 100
-
-# time offset to use for comparisons involving TMTask.startDate:
-# determined through trial-and-error and may not be entirely accurate;
-# could this stop working after a daylight savings time adjustment?
-# FIX: this offset by a day, the day after I had this working
-# STARTDATE_OFFSET = 1567915800
 
 TODAY = datetime.today()
 TODAY_DATE = TODAY.date()
@@ -133,7 +127,6 @@ def indent_string(string_to_indent):
     '''
     Indents a multi-line string with tabs.
     '''
-
     lines = string_to_indent.split("\n")
     indented_lines = ["\t" + line for line in lines]
     indented_string = "\n".join(indented_lines)
@@ -143,7 +136,6 @@ def query_projects(past_time):
     '''
     Fetches projects not finished, or finished after the timestamp provided.
     '''
-
     where_clause = 'AND p.stopDate IS NULL'
     if past_time != None:
         where_clause = 'AND (p.stopDate IS NULL OR p.stopDate > {})'.format(past_time)
@@ -177,7 +169,6 @@ def query_subtasks(task_ids):
     '''
     Fetches subtasks given a list of task IDs.
     '''
-
     SUBTASK_QUERY = f"""
     SELECT
         c.uuid,
@@ -206,7 +197,6 @@ def query_tasks(past_time):
     '''
     Fetches tasks completed after the timestamp provided.
     '''
-
     # FUTURE: if both args provided, why not filter on both?
     where_clause = ''
     if past_time != None:
@@ -264,7 +254,6 @@ def remove_emojis(input_string):
     '''
     Strips out emojis from the given string.
     '''
-
     cleaned_string = EMOJI_PATTERN.sub(r'', input_string)
     cleaned_string = cleaned_string.strip()
     return cleaned_string
@@ -336,14 +325,6 @@ for row in task_results:
         if not ARG_TAG:
             if DEBUG: print("... SKIPPED (project): {}".format(row))
             continue
-    # if filtering by tag, only show Today's items
-    # future: make this an option, e.g., base on provided range instead?
-    # FIX: don't show tasks starting after midnight
-    # if ARG_TAG:
-        # print("{} + X = {} ~ {} • {}".format(row[3], float(row[3]) + STARTDATE_OFFSET, TOMORROW_TIMESTAMP, row[1]))
-        # if (float(row[3]) + STARTDATE_OFFSET > TOMORROW_TIMESTAMP):
-        #     if DEBUG: print("... SKIPPED (task, starts after today): {}".format(row))        
-        #     continue
     # pre-process tags and skip
     taskTags = ""
     if row[7] != None:
