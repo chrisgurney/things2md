@@ -13,6 +13,7 @@ Run without any parameters to see the full list of arguments available:
 ```
 --debug             If set will show script debug information
 --format {import}   Format mode. Import: Outputs tasks as headings, notes as body text, subtasks as bullets.
+--gcallinks         If provided, appends links to create a Google calendar event for the task.
 --groupby {date,project}
                     How to group the tasks
 --orderby {date,index,project}
@@ -21,7 +22,7 @@ Run without any parameters to see the full list of arguments available:
                         tasks are relative to midnight of the day requested.
 --simple            If set will hide task subtasks + notes and cancelled tasks
 --tag TAG           If provided, only uncompleted tasks with this tag are fetched
---gcallinks         If provided, appends links to create a Google calendar event for the task.
+--today             If set will show incomplete tasks in Today
 ```
 
 Only the `range` or `tag` parameter is required, at a minimum.
@@ -69,16 +70,26 @@ python3 things2md.py --range "1 week ago" --orderby project --simple
 
 ## Listing Todo Tasks
 
-_To narrow down tasks to be done, I tag them with a special tag and retrieve just those tasks:_
+_BETA:_ Show uncompleted tasks in Today.
 
-Show uncompleted tasks, tagged with "focus", ordered how they're ordered by index, and show links that you can click to create a Google Calendar event:
+> [!WARNING]
+> Known issues:
+> - Evening tasks seem to be showing at the top of the list.
+> - Repeat tasks aren't being returned. 
+```
+python3 things2md.py --today --orderby index
+```
+
+_To further narrow down tasks to be done, I tag them with a special tag and retrieve just those tasks:_
+
+Show uncompleted tasks, tagged with "focus", ordered how they're ordered in Things (though Evening tasks seem to show at the top), and show links that you can click to create a Google Calendar event:
 ```
 python3 things2md.py --tag "focus" --orderby index --gcallinks
 ```
 
 ## Exporting Tasks as Simple Markdown to be Imported (into Obsidian, or another note-taking tool)
 
-_I frequently draft notes in Things that I just want to get it out as simple markdown:_
+_I frequently draft notes in Things that I just want to get it out as simple markdown._
 
 Show uncompleted tasks, tagged with "import", formatted in markdown with task names as headers, notes as body text, and subtasks as a list:
 ```
@@ -100,7 +111,3 @@ I call this script via the [shell commands community plugin](https://github.com/
 
 - [things.sh](https://github.com/AlexanderWillner/things.sh) - I found this shell script late in the development of `things2md`, but it looks like another good interpretation of how to query the Things database.
 - [obsidian-things-logbook](https://github.com/liamcain/obsidian-things-logbook) - This is an [Obsidian](https://obsidian.md/) plugin that periodically syncs the Things logook with your Obsidian vault. This wasn't the behavior I was looking for, hence why I developed `things2md`.
-
-# Future Ideas
-
-- I have attempted to get just the tasks that are in today's list, but I haven't figured out how to do that quite yet. My current workflow (or workaround, depending on your needs) is to tag tasks to be fetched using the `--tag` argument.
