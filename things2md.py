@@ -49,6 +49,7 @@ ARG_TAG = args.tag
 ARG_TODAY = args.today
 
 if ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY:
+    print(f"ERROR: The --range, --tag, or --today parameter is required")
     parser.print_help()
     exit(0)
 

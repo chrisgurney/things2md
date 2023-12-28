@@ -25,9 +25,11 @@ Run without any parameters to see the full list of arguments available:
 --today             If set will show incomplete tasks in Today
 ```
 
-Only the `range` or `tag` parameter is required, at a minimum.
+The `--range`, `--tag`, or `--today` parameter is required, at a minimum.
 
-Note that nothing will be returned of no tasks match the given arguments.
+Note that nothing will be returned if no tasks match the given arguments.
+
+Currently, any tasks tagged `personal` or `pers` are not included in the output.
 
 # Examples
 
@@ -73,9 +75,8 @@ python3 things2md.py --range "1 week ago" --orderby project --simple
 _BETA:_ Show uncompleted tasks in Today.
 
 > [!WARNING]
-> Known issues:
+> Known issue:
 > - Evening tasks seem to be showing at the top of the list.
-> - Repeat tasks aren't being returned. 
 ```
 python3 things2md.py --today --orderby index
 ```
