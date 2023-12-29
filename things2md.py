@@ -144,7 +144,7 @@ def query_projects(past_time):
     PROJECT_QUERY = f"""
     SELECT
         p.uuid as uuid,
-        p.title as project,
+        p.title as title,
         p.stopDate as stopDate
     FROM
         TMTask t
@@ -157,6 +157,7 @@ def query_projects(past_time):
     """
 
     conn = sqlite3.connect(THINGS_DB)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     if DEBUG: print("\nPROJECT QUERY:" + PROJECT_QUERY)
@@ -172,10 +173,10 @@ def query_subtasks(task_ids):
     '''
     SUBTASK_QUERY = f"""
     SELECT
-        c.uuid,
-        c.task,
-        c.title,
-        c.stopDate
+        c.uuid as uuid,
+        c.task as task,
+        c.title as title,
+        c.stopDate as stopDate
     FROM
         TMChecklistItem c
     WHERE
@@ -185,6 +186,7 @@ def query_subtasks(task_ids):
     """
 
     conn = sqlite3.connect(THINGS_DB)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     if DEBUG: print("\nSUBTASK QUERY:" + SUBTASK_QUERY)
@@ -300,11 +302,11 @@ project_results = query_projects(past_time)
 
 # format projects:
 # store in associative array for easier reference later and strip out project emojis
-if DEBUG: print("PROJECTS ({}):".format(len(project_results)))
+if DEBUG: print(f"PROJECTS ({len(project_results)}):")
 projects = {}
 for row in project_results:
-    if DEBUG: print(row)
-    projects[row[0]] = remove_emojis(row[1])
+    if DEBUG: print(dict(row))
+    projects[row['uuid']] = remove_emojis(row['title'])
 
 #
 # Prepare Tasks
@@ -325,16 +327,16 @@ for row in task_results:
         # want to show project when showing what I'm focussed on, 
         # but this won't make sense if combined with other arguments 
         if not ARG_TAG:
-            if DEBUG: print(f"... SKIPPED (project): {row}")
+            if DEBUG: print(f"... SKIPPED (project): {dict(row)}")
             continue
     # pre-process tags and skip
     taskTags = ""
     if row['tags'] != None:
         if "personal" in row['tags'] or "pers" in row['tags']:
-            if DEBUG: print(f"... SKIPPED (personal|pers tag): {row}")
+            if DEBUG: print(f"... SKIPPED (personal|pers tag): {dict(row)}")
             continue
         taskTags = " #" + row['tags']
-    if DEBUG: print(row)
+    if DEBUG: print(dict(row))
     # project name
     taskProject = ""
     taskProjectRaw = "No Project"
@@ -401,26 +403,26 @@ if DEBUG:
 if not ARG_SIMPLE:
     subtask_results = query_subtasks(completed_work_task_ids)
 
-    if DEBUG: print("SUBTASKS ({}):".format(len(subtask_results)))
+    if DEBUG: print(f"SUBTASKS ({len(subtask_results)}):")
 
     # format subtasks
     task_subtasks = {}
     for row in subtask_results:
-        if DEBUG: print(row)
-        if row[1] in task_subtasks:
-            subtask = task_subtasks[row[1]] + "\n"
+        if DEBUG: print(dict(row))
+        if row['task'] in task_subtasks:
+            subtask = task_subtasks[row['task']] + "\n"
         else:
             subtask = ""
         if ARG_FORMAT == "import":
             subtask += "- "
         else:
             subtask += "\t- "
-            if row[3] != None:
+            if row['stopDate'] != None:
                 subtask += "[/] "
             else:
                 subtask += "[ ] "
-        subtask += row[2]
-        task_subtasks[row[1]] = subtask
+        subtask += row['title']
+        task_subtasks[row['task']] = subtask
 
     if DEBUG: print(task_subtasks)
 
