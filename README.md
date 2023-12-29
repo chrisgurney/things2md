@@ -89,7 +89,7 @@ Show uncompleted tasks, tagged with "focus", ordered how they're ordered in Thin
 python3 things2md.py --tag "focus" --orderby index --gcallinks
 ```
 
-Show uncompleted tasks with deadlines set, and those deadline dates, ordered by deadline (note: does not show projects):
+Show uncompleted tasks with deadlines set, and those deadline dates, ordered by deadline:
 ```
 python3 things2md.py --due
 ```
