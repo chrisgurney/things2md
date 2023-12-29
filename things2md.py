@@ -59,21 +59,6 @@ if ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY and not ARG_DUE:
 # GLOBALS
 # #############################################################################
 
-QUERY_LIMIT = 100
-
-TODAY = datetime.today()
-TODAY_DATE = TODAY.date()
-TODAY_TIMESTAMP = datetime(TODAY.year, TODAY.month, TODAY.day).timestamp()
-TOMORROW = datetime(TODAY.year, TODAY.month, TODAY.day) + relativedelta(days=1)
-TOMORROW_TIMESTAMP = TOMORROW.timestamp()
-
-# default GCal event times to 9am-9:30am today
-event_start_time = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
-event_finish_time = event_start_time + relativedelta(minutes=30)
-event_start_rfc5545 = event_start_time.strftime('%Y%m%dT%H%M%S')
-event_finish_rfc5545 = event_finish_time.strftime('%Y%m%dT%H%M%S')
-GCAL_EVENT_DATES = f"{event_start_rfc5545}/{event_finish_rfc5545}"
-
 EMOJI_PATTERN = re.compile("["
                            u"\U0001F600-\U0001F64F"
                            u"\U0001F300-\U0001F5FF"
@@ -88,6 +73,23 @@ EMOJI_PATTERN = re.compile("["
                            u"\U000024C2-\U0001F251"
                            "]+", flags=re.UNICODE)
 
+# default GCal event times to 9am-9:30am today
+event_start_time = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
+event_finish_time = event_start_time + relativedelta(minutes=30)
+event_start_rfc5545 = event_start_time.strftime('%Y%m%dT%H%M%S')
+event_finish_rfc5545 = event_finish_time.strftime('%Y%m%dT%H%M%S')
+GCAL_EVENT_DATES = f"{event_start_rfc5545}/{event_finish_rfc5545}"
+
+QUERY_LIMIT = 100
+
+THINGS_SHOW_URL_BASE = "things:///show?id="
+
+TODAY = datetime.today()
+TODAY_DATE = TODAY.date()
+TODAY_TIMESTAMP = datetime(TODAY.year, TODAY.month, TODAY.day).timestamp()
+TOMORROW = datetime(TODAY.year, TODAY.month, TODAY.day) + relativedelta(days=1)
+TOMORROW_TIMESTAMP = TOMORROW.timestamp()
+
 # #############################################################################
 # FUNCTIONS
 # #############################################################################
@@ -97,7 +99,6 @@ def get_past_time(str_days_ago):
     Returns a timestamp for the given date range relative to today.
     today, yesterday, X days ago, X weeks ago, X months ago, X years ago
     '''
-
     splitted = str_days_ago.split()
     past_time = ""
     if len(splitted) == 1 and splitted[0].lower() == 'today':
@@ -233,6 +234,7 @@ def query_tasks(past_time):
         TMTask.stopDate as stopDate,
         TMTask.status as status,
         TMTask.project as project,
+        TMTask.type as type,
         date(
             CASE
                 WHEN TMTask.deadline
@@ -389,18 +391,23 @@ for row in task_results:
         if ARG_GROUPBY != "project" or ARG_SIMPLE:
             work_task += f"{taskProject}"
         # task name
-        work_task += row['title']
+        # if it's a project
+        if row['type'] == 1:
+            # link to it in Things
+            work_task += f"{remove_emojis(row['title'])} [↗]({THINGS_SHOW_URL_BASE}{row['uuid']})"
+        else:
+            work_task += row['title']
         # task date
         if work_task_date != "":
             if ARG_GROUPBY != "date" or (ARG_SIMPLE and ARG_RANGE not in ('today', 'yesterday')):
                 work_task += f" • {work_task_date}"
+        # gcal link
+        if ARG_GCAL_LINKS:
+            work_task += f" {get_gcal_link(row['uuid'], row['title'])}"
         if row['deadline']:
             work_task += f" • ⚑ {row['deadline']}"
     # task tags
     # work_task += f" • {taskTags}"
-    # gcal link
-    if ARG_GCAL_LINKS:
-        work_task += " " + get_gcal_link(row['uuid'], row['title'])
     completed_work_tasks[row['uuid']] = work_task
     if row['status'] == 2:
         cancelled_work_tasks[row['uuid']] = work_task
