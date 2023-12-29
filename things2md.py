@@ -26,19 +26,21 @@ THINGS_DB = os.getenv("THINGS_DB")
 
 parser = argparse.ArgumentParser(description='Things3 database -> Markdown conversion script.')
 
-parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information')
+parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
+parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
 parser.add_argument('--format', choices=['import'], help='Format mode. Import: Outputs tasks as headings, notes as body text, subtasks as bullets.')
 parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
-parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks')
-parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks')
+parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
+parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago"). Completed tasks are relative to midnight of the day requested.')
-parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks + notes and cancelled tasks')
-parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched')
-parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today')
+parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks + notes and cancelled tasks.')
+parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
+parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
 
 args = parser.parse_args()
 
 DEBUG = args.debug
+ARG_DUE = args.due
 ARG_FORMAT = args.format
 ARG_GCAL_LINKS = args.gcallinks
 ARG_GROUPBY = args.groupby
@@ -48,8 +50,8 @@ ARG_SIMPLE = args.simple # TODO: deprecate and fold into 'format' argument
 ARG_TAG = args.tag
 ARG_TODAY = args.today
 
-if ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY:
-    print(f"ERROR: The --range, --tag, or --today parameter is required")
+if ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY and not ARG_DUE:
+    print(f"ERROR: The --due, --range, --tag, or --today parameter is required")
     parser.print_help()
     exit(0)
 
@@ -61,6 +63,7 @@ QUERY_LIMIT = 100
 
 TODAY = datetime.today()
 TODAY_DATE = TODAY.date()
+TODAY_TIMESTAMP = datetime(TODAY.year, TODAY.month, TODAY.day).timestamp()
 TOMORROW = datetime(TODAY.year, TODAY.month, TODAY.day) + relativedelta(days=1)
 TOMORROW_TIMESTAMP = TOMORROW.timestamp()
 
@@ -203,17 +206,21 @@ def query_tasks(past_time):
     # FUTURE: if both args provided, why not filter on both?
     where_clause = ''
     if past_time != None:
-        where_clause = 'AND TMTask.stopDate IS NOT NULL AND TMTask.stopDate > {} '.format(past_time)
+        where_clause = f'AND stopDate IS NOT NULL AND stopDate > {past_time} '
+    elif ARG_DUE:
+        where_clause = f'AND deadline IS NOT NULL AND startDate IS NOT NULL AND status = 0 AND start = 1 '
     elif ARG_TAG != None:
-        where_clause = 'AND TMTag.title LIKE "%{}%" AND TMTask.stopDate IS NULL '.format(ARG_TAG)
+        where_clause = f'AND TMTag.title LIKE "%{ARG_TAG}%" AND stopDate IS NULL '
     elif ARG_TODAY:
-        where_clause = 'AND startDate IS NOT NULL AND status = 0 AND type = 0 AND start = 1'
+        where_clause = 'AND startDate IS NOT NULL AND status = 0 AND type = 0 AND start = 1 '
 
     if ARG_ORDERBY == "project":
         # FIX: doesn't actually sort by name (just by ID)
         orderby_clause = 'TMTask.project ASC, TMTask.stopDate DESC'
     elif ARG_ORDERBY == "index":
         orderby_clause = 'TMTask.todayIndex'
+    elif ARG_DUE:
+        orderby_clause = 'deadline'
     else:
         orderby_clause = 'TMTask.stopDate DESC'
 
@@ -226,6 +233,20 @@ def query_tasks(past_time):
         TMTask.stopDate as stopDate,
         TMTask.status as status,
         TMTask.project as project,
+        date(
+            CASE
+                WHEN TMTask.deadline
+            THEN
+                format(
+                    '%d-%02d-%02d',
+                    (TMTask.deadline & 134152192) >> 16,
+                    (TMTask.deadline & 61440) >> 12,
+                    (TMTask.deadline & 3968) >> 7
+                )
+            ELSE
+                TMTask.deadline
+            END
+        ) AS deadline,
         GROUP_CONCAT(TMTag.title, ' #') as tags
     FROM
         TMTask
@@ -322,7 +343,7 @@ taskProject_previous = "TASKPROJECTPREVIOUS"
 
 if DEBUG: print(f"\nTASKS ({len(task_results)}):")
 for row in task_results:
-    # ignore completed project lines
+    # ignore project lines
     if row['uuid'] in projects:
         # want to show project when showing what I'm focussed on, 
         # but this won't make sense if combined with other arguments 
@@ -380,6 +401,8 @@ for row in task_results:
         if work_task_date != "":
             if ARG_GROUPBY != "date" or (ARG_SIMPLE and ARG_RANGE not in ('today', 'yesterday')):
                 work_task += f" • {work_task_date}"
+        if row['deadline']:
+            work_task += f" • ⚑ {row['deadline']}"
     # task tags
     # work_task += f" • {taskTags}"
     # gcal link

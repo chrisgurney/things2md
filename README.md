@@ -11,7 +11,8 @@ Copy `.env.example` to `.env` and update with the path to your Things3 sqlite da
 Run without any parameters to see the full list of arguments available:
 
 ```
---debug             If set will show script debug information
+--debug             If set will show script debug information.
+--due               If set will show incomplete tasks with deadlines.
 --format {import}   Format mode. Import: Outputs tasks as headings, notes as body text, subtasks as bullets.
 --gcallinks         If provided, appends links to create a Google calendar event for the task.
 --groupby {date,project}
@@ -20,12 +21,12 @@ Run without any parameters to see the full list of arguments available:
                     How to order the tasks
 --range RANGE       Relative date range to get completed tasks for (e.g., "0 days ago", "1 day ago", "1 week ago"). Completed
                         tasks are relative to midnight of the day requested.
---simple            If set will hide task subtasks + notes and cancelled tasks
---tag TAG           If provided, only uncompleted tasks with this tag are fetched
---today             If set will show incomplete tasks in Today
+--simple            If set will hide task subtasks + notes and cancelled tasks.
+--tag TAG           If provided, only uncompleted tasks with this tag are fetched.
+--today             If set will show incomplete tasks in Today.
 ```
 
-The `--range`, `--tag`, or `--today` parameter is required, at a minimum.
+The `--due`, `--range`, `--tag`, or `--today` parameter is required, at a minimum.
 
 Note that nothing will be returned if no tasks match the given arguments.
 
@@ -86,6 +87,11 @@ _To further narrow down tasks to be done, I tag them with a special tag and retr
 Show uncompleted tasks, tagged with "focus", ordered how they're ordered in Things (though Evening tasks seem to show at the top), and show links that you can click to create a Google Calendar event:
 ```
 python3 things2md.py --tag "focus" --orderby index --gcallinks
+```
+
+Show uncompleted tasks with deadlines set, and those deadline dates, ordered by deadline (note: does not show projects):
+```
+python3 things2md.py --due
 ```
 
 ## Exporting Tasks as Simple Markdown to be Imported (into Obsidian, or another note-taking tool)
