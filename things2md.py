@@ -242,6 +242,7 @@ def query_tasks(past_time):
     """
 
     conn = sqlite3.connect(THINGS_DB)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     if DEBUG: print("\nTASK QUERY:" + TASK_QUERY)
@@ -317,83 +318,81 @@ task_notes = {}
 work_task_date_previous = ""
 taskProject_previous = "TASKPROJECTPREVIOUS"
 
-if DEBUG: print("\nTASKS ({}):".format(len(task_results)))
+if DEBUG: print(f"\nTASKS ({len(task_results)}):")
 for row in task_results:
     # ignore completed project lines
-    if row[0] in projects:
+    if row['uuid'] in projects:
         # want to show project when showing what I'm focussed on, 
         # but this won't make sense if combined with other arguments 
         if not ARG_TAG:
-            if DEBUG: print("... SKIPPED (project): {}".format(row))
+            if DEBUG: print(f"... SKIPPED (project): {row}")
             continue
     # pre-process tags and skip
     taskTags = ""
-    if row[7] != None:
-        if "personal" in row[7] or "pers" in row[7]:
-            if DEBUG: print("... SKIPPED (personal|pers tag): {}".format(row))
+    if row['tags'] != None:
+        if "personal" in row['tags'] or "pers" in row['tags']:
+            if DEBUG: print(f"... SKIPPED (personal|pers tag): {row}")
             continue
-        taskTags = " #" + row[7]
+        taskTags = " #" + row['tags']
     if DEBUG: print(row)
     # project name
     taskProject = ""
     taskProjectRaw = "No Project"
-    if row[6] != None:
-        taskProjectRaw = projects[row[6]]
-        taskProject = "{} // ".format(taskProjectRaw)
+    if row['project'] != None:
+        taskProjectRaw = projects[row['project']]
+        taskProject = f"{taskProjectRaw} // "
     # task date
     work_task_date = ""
-    if row[4] != None:
-        work_task_date = datetime.fromtimestamp(row[4]).date()
+    if row['stopDate'] != None:
+        work_task_date = datetime.fromtimestamp(row['stopDate']).date()
     # header
     if not ARG_SIMPLE:
         if ARG_GROUPBY == "date":
             # date header
             if work_task_date != work_task_date_previous:
-                completed_work_tasks[row[0] + "-"] = "\n## ☑️ {}\n".format(work_task_date)
+                completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {work_task_date}\n"
                 work_task_date_previous = work_task_date
         elif ARG_GROUPBY == "project":
             # project header
             if taskProject != taskProject_previous:
-                completed_work_tasks[row[0] + "-"] = "\n## ☑️ {}\n".format(taskProjectRaw)
+                completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {taskProjectRaw}\n"
                 taskProject_previous = taskProject
     # task title, project, date
     if ARG_FORMAT == "import":
-        work_task = "# {}\n".format(row[1])
+        work_task = f"# {row['title']}\n"
     else:
         work_task = "- "
         if not ARG_SIMPLE:
-            if row[5] == 0:
+            if row['status'] == 0:
                 work_task += "[ ] "
-            elif row[5] == 2:
+            elif row['status'] == 2:
                 work_task += "[x] "
             else:
                 work_task += "[/] "
         # task project
         if ARG_GROUPBY != "project" or ARG_SIMPLE:
-            work_task += "{}".format(taskProject)
+            work_task += f"{taskProject}"
         # task name
-        work_task += row[1]
+        work_task += row['title']
         # task date
         if work_task_date != "":
             if ARG_GROUPBY != "date" or (ARG_SIMPLE and ARG_RANGE not in ('today', 'yesterday')):
-                work_task +=" • {}".format(work_task_date)
+                work_task += f" • {work_task_date}"
     # task tags
-    # work_task +=" • {}".format(taskTags)
+    # work_task += f" • {taskTags}"
     # gcal link
     if ARG_GCAL_LINKS:
-        work_task += " " + get_gcal_link(row[0], row[1])
-    completed_work_tasks[row[0]] = work_task
-    if row[5] == 2:
-        cancelled_work_tasks[row[0]] = work_task
-    completed_work_task_ids.append(row[0])
-    if row[2]:
-        task_notes[row[0]] = row[2]
+        work_task += " " + get_gcal_link(row['uuid'], row['title'])
+    completed_work_tasks[row['uuid']] = work_task
+    if row['status'] == 2:
+        cancelled_work_tasks[row['uuid']] = work_task
+    completed_work_task_ids.append(row['uuid'])
+    if row['notes']:
+        task_notes[row['uuid']] = row['notes']
         
-if DEBUG: print("\nTASKS COMPLETED ({}):".format(len(completed_work_tasks)))
-if DEBUG: print(completed_work_tasks)
-
-if DEBUG: print("\nCOMPLETED NOTES ({}):".format(len(task_notes)))
-if DEBUG: print(task_notes)
+if DEBUG:
+    print(f"\nTASKS COMPLETED ({len(completed_work_tasks)}):\n{completed_work_tasks}")
+    print(f"\nCOMPLETED NOTES ({len(task_notes)}):\n{task_notes}")
 
 #
 # Get Subtasks (for completed tasks)
