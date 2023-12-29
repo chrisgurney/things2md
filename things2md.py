@@ -212,7 +212,7 @@ def query_tasks(past_time):
     elif ARG_TAG != None:
         where_clause = f'AND TMTag.title LIKE "%{ARG_TAG}%" AND stopDate IS NULL '
     elif ARG_TODAY:
-        where_clause = 'AND startDate IS NOT NULL AND status = 0 AND type = 0 AND start = 1 '
+        where_clause = 'AND startDate IS NOT NULL AND status = 0 AND start = 1 '
 
     if ARG_ORDERBY == "project":
         # FIX: doesn't actually sort by name (just by ID)
@@ -343,13 +343,6 @@ taskProject_previous = "TASKPROJECTPREVIOUS"
 
 if DEBUG: print(f"\nTASKS ({len(task_results)}):")
 for row in task_results:
-    # ignore project lines
-    if row['uuid'] in projects:
-        # want to show project when showing what I'm focussed on, 
-        # but this won't make sense if combined with other arguments 
-        if not ARG_TAG:
-            if DEBUG: print(f"... SKIPPED (project): {dict(row)}")
-            continue
     # pre-process tags and skip
     taskTags = ""
     if row['tags'] != None:
