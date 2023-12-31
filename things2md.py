@@ -94,39 +94,39 @@ TOMORROW_TIMESTAMP = TOMORROW.timestamp()
 # FUNCTIONS
 # #############################################################################
 
-def get_past_time(str_days_ago):
+def get_time_range(date_range):
     '''
-    Returns a timestamp for the given date range relative to today.
+    Returns timestamps for the given date range, relative to today.
     today, yesterday, X days ago, X weeks ago, X months ago, X years ago
     '''
-    splitted = str_days_ago.split()
-    past_time = ""
+    splitted = date_range.split()
+    start_time = None
+    end_time = None
     if len(splitted) == 1 and splitted[0].lower() == 'today':
-        past_time = TODAY.timestamp()
+        start_time = TODAY.timestamp()
     elif len(splitted) == 1 and splitted[0].lower() == 'yesterday':
-        past_date = TODAY - relativedelta(days=1)
-        past_time = past_date.timestamp()
+        start_date = TODAY - relativedelta(days=1)
+        start_time = start_date.timestamp()
     elif splitted[1].lower() in ['day', 'days', 'd']:
-        past_date = TODAY - relativedelta(days=int(splitted[0]))
-        past_time = past_date.timestamp()
+        start_date = TODAY - relativedelta(days=int(splitted[0]))
+        start_time = start_date.timestamp()
     elif splitted[1].lower() in ['wk', 'wks', 'week', 'weeks', 'w']:
-        past_date = TODAY - relativedelta(weeks=int(splitted[0]))
-        past_time = past_date.timestamp()
+        start_date = TODAY - relativedelta(weeks=int(splitted[0]))
+        start_time = start_date.timestamp()
     elif splitted[1].lower() in ['mon', 'mons', 'month', 'months', 'm']:
-        past_date = TODAY - relativedelta(months=int(splitted[0]))
-        past_time = past_date.timestamp()
+        start_date = TODAY - relativedelta(months=int(splitted[0]))
+        start_time = start_date.timestamp()
     elif splitted[1].lower() in ['yrs', 'yr', 'years', 'year', 'y']:
-        past_date = TODAY - relativedelta(years=int(splitted[0]))
-        past_time = past_date.timestamp()
-    else:
-        return("Wrong date range format")
+        start_date = TODAY - relativedelta(years=int(splitted[0]))
+        start_time = start_date.timestamp()
 
-    # get midnight of the day requested, to ensure we get all tasks
-    past_date = datetime.fromtimestamp(float(past_time))
-    past_date = datetime(past_date.year, past_date.month, past_date.day)
-    past_time = past_date.timestamp()
+    if start_time:
+        # get midnight of the day requested, to ensure we get all tasks
+        start_date = datetime.fromtimestamp(float(start_time))
+        start_date = datetime(start_date.year, start_date.month, start_date.day)
+        start_time = start_date.timestamp()
 
-    return past_time    
+    return start_time, end_time
 
 def indent_string(string_to_indent):
     '''
@@ -303,25 +303,26 @@ def get_gcal_link(task_id, task_title):
 if DEBUG: print("THINGS_DB:\n{}".format(THINGS_DB))
 if DEBUG: print("PARAMS:\n{}".format(args))
 
-past_time = None
+start_time = None
+end_time = None
 if ARG_RANGE != None:
-    past_time = get_past_time(ARG_RANGE)
-    if past_time == "Wrong date range format":
-        print("Error: " + past_time + ": " + ARG_RANGE)
+    start_time, end_time = get_time_range(ARG_RANGE)
+    if start_time == None:
+        print(f"Error: Invalid date range: {ARG_RANGE}")
         exit()
-    if DEBUG: print("\nDATE:\n{} -> {}".format(ARG_RANGE,past_time))
+    if DEBUG: print(f"\nDATE RANGE:\n{ARG_RANGE} -> {start_time}, {end_time}")
 
 #
 # Get Tasks
 #
 
-task_results = query_tasks(past_time)
+task_results = query_tasks(start_time)
 
 #
 # Get Projects
 #
 
-project_results = query_projects(past_time)
+project_results = query_projects(start_time)
 
 # format projects:
 # store in associative array for easier reference later and strip out project emojis
