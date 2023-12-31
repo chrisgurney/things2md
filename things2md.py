@@ -149,13 +149,13 @@ def indent_string(string_to_indent):
     indented_string = "\n".join(indented_lines)
     return indented_string
 
-def query_projects(past_time):
+def query_projects(end_time):
     '''
     Fetches projects not finished, or finished after the timestamp provided.
     '''
-    where_clause = 'AND p.stopDate IS NULL'
-    if past_time != None:
-        where_clause = 'AND (p.stopDate IS NULL OR p.stopDate > {})'.format(past_time)
+    where_clause = 'AND p.stopDate IS NULL '
+    if end_time != None:
+        where_clause = f'AND (p.stopDate IS NULL OR p.stopDate > {end_time}) '
 
     PROJECT_QUERY = f"""
     SELECT
@@ -212,14 +212,14 @@ def query_subtasks(task_ids):
 
     return subtask_results
 
-def query_tasks(past_time):
+def query_tasks(end_time):
     '''
     Fetches tasks completed after the timestamp provided.
     '''
     # FUTURE: if both args provided, why not filter on both?
     where_clause = ''
-    if past_time != None:
-        where_clause = f'AND stopDate IS NOT NULL AND stopDate > {past_time} '
+    if end_time != None:
+        where_clause = f'AND stopDate IS NOT NULL AND stopDate > {end_time} '
     elif ARG_DUE:
         where_clause = f'AND deadline IS NOT NULL AND startDate IS NOT NULL AND status = 0 AND start = 1 '
     elif ARG_TAG != None:
