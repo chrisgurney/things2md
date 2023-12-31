@@ -32,7 +32,7 @@ parser.add_argument('--format', choices=['import'], help='Format mode. Import: O
 parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
-parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago"). Completed tasks are relative to midnight of the day requested.')
+parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.')
 parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks + notes and cancelled tasks.')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
@@ -97,7 +97,8 @@ TOMORROW_TIMESTAMP = TOMORROW.timestamp()
 def get_time_range(date_range):
     '''
     Returns timestamps for the given date range, relative to today.
-    today, yesterday, X days ago, X weeks ago, X months ago, X years ago
+    Supported: today, yesterday, X days ago, X weeks ago, X months ago, X years ago
+    "this week" is also supported, and starts on Monday
     '''
     splitted = date_range.split()
     start_time = None
