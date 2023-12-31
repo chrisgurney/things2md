@@ -19,8 +19,8 @@ Run without any parameters to see the full list of arguments available:
                     How to group the tasks
 --orderby {date,index,project}
                     How to order the tasks
---range RANGE       Relative date range to get completed tasks for (e.g., "0 days ago", "1 day ago", "1 week ago"). Completed
-                        tasks are relative to midnight of the day requested.
+--range RANGE       Relative date range to get completed tasks for (e.g., "0 days ago", "1 day ago", "1 week ago",
+                    "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.
 --simple            If set will hide task subtasks + notes and cancelled tasks.
 --tag TAG           If provided, only uncompleted tasks with this tag are fetched.
 --today             If set will show incomplete tasks in Today.
