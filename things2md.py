@@ -102,7 +102,12 @@ def get_time_range(date_range):
     splitted = date_range.split()
     start_time = None
     end_time = None
-    if len(splitted) == 1 and splitted[0].lower() == 'today':
+    if date_range == "this week":
+        start_date = TODAY - relativedelta(days=TODAY.weekday())
+        end_date = start_date + relativedelta(days=6)
+        start_time = start_date.timestamp()
+        end_time = end_date.timestamp()
+    elif len(splitted) == 1 and splitted[0].lower() == 'today':
         start_time = TODAY.timestamp()
     elif len(splitted) == 1 and splitted[0].lower() == 'yesterday':
         start_date = TODAY - relativedelta(days=1)
@@ -125,6 +130,12 @@ def get_time_range(date_range):
         start_date = datetime.fromtimestamp(float(start_time))
         start_date = datetime(start_date.year, start_date.month, start_date.day)
         start_time = start_date.timestamp()
+
+    if end_time:
+        # get 11:59:59 of the day requested, to ensure we get all tasks
+        end_date = datetime.fromtimestamp(float(end_time))
+        end_date = datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59)
+        end_time = end_date.timestamp()
 
     return start_time, end_time
 
@@ -310,7 +321,8 @@ if ARG_RANGE != None:
     if start_time == None:
         print(f"Error: Invalid date range: {ARG_RANGE}")
         exit()
-    if DEBUG: print(f"\nDATE RANGE:\n{ARG_RANGE} -> {start_time}, {end_time}")
+    if DEBUG: print(f"\nDATE RANGE:\n\"{ARG_RANGE}\" -> {start_time}, {end_time}")
+    if DEBUG: print(f"  -> {datetime.fromtimestamp(start_time)}, {datetime.fromtimestamp(end_time)}")
 
 #
 # Get Tasks
