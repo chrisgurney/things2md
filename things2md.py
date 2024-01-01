@@ -86,6 +86,7 @@ THINGS_SHOW_URL_BASE = "things:///show?id="
 
 TODAY = datetime.today()
 TODAY_DATE = TODAY.date()
+TODAY_INT = int(TODAY_DATE.strftime('%Y%m%d'))
 TODAY_TIMESTAMP = datetime(TODAY.year, TODAY.month, TODAY.day).timestamp()
 TOMORROW = datetime(TODAY.year, TODAY.month, TODAY.day) + relativedelta(days=1)
 TOMORROW_TIMESTAMP = TOMORROW.timestamp()
@@ -221,11 +222,11 @@ def query_tasks(end_time):
     if end_time != None:
         where_clause = f'AND stopDate IS NOT NULL AND stopDate > {end_time} '
     elif ARG_DUE:
-        where_clause = f'AND deadline IS NOT NULL AND startDate IS NOT NULL AND status = 0 AND start = 1 '
+        where_clause = f'AND deadline IS NOT NULL AND startDate IS NOT NULL AND status = 0 AND start IN (1, 2) '
     elif ARG_TAG != None:
         where_clause = f'AND TMTag.title LIKE "%{ARG_TAG}%" AND stopDate IS NULL '
     elif ARG_TODAY:
-        where_clause = 'AND startDate IS NOT NULL AND status = 0 AND start = 1 '
+        where_clause = f'AND startDateAsInt IS NOT NULL AND startDateAsInt = {TODAY_INT} AND status = 0 AND start IN (1, 2) '
 
     if ARG_ORDERBY == "project":
         # FIX: doesn't actually sort by name (just by ID)
@@ -242,7 +243,20 @@ def query_tasks(end_time):
         TMTask.uuid as uuid,
         TMTask.title as title,
         TMTask.notes as notes,
-        TMTask.startDate as startDate,
+        CAST(
+            CASE
+                WHEN TMTask.startDate
+            THEN
+                format(
+                    '%d%02d%02d',
+                    (TMTask.startDate & 134152192) >> 16,
+                    (TMTask.startDate & 61440) >> 12,
+                    (TMTask.startDate & 3968) >> 7
+                )
+            ELSE
+                TMTask.startDate
+            END
+        AS INTEGER) AS startDateAsInt,
         TMTask.stopDate as stopDate,
         TMTask.status as status,
         TMTask.project as project,
@@ -324,6 +338,8 @@ if ARG_RANGE != None:
         exit()
     if DEBUG: print(f"\nDATE RANGE:\n\"{ARG_RANGE}\" -> {start_time}, {end_time}")
     if DEBUG: print(f"  -> {datetime.fromtimestamp(start_time)}, {datetime.fromtimestamp(end_time)}")
+
+if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_INT}, TODAY_TIMESTAMP: {TODAY_TIMESTAMP}")
 
 #
 # Get Tasks
