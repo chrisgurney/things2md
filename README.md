@@ -4,7 +4,10 @@ Things3 database -> Markdown conversion script.
 
 `pip3 install -r requirements.txt`
 
-Copy `.env.example` to `.env` and update with the path to your Things3 sqlite database file.
+Copy `.env.example` to `.env` and set:
+
+- Required: `THINGS_DB` = the path to your Things3 sqlite database file.
+- Optional: `SKIP_TAGS` = a comma-separated list of tags for any tasks you do not want included in output (e.g., `"personal,pers"`).
 
 # Usage
 
@@ -28,9 +31,10 @@ Run without any parameters to see the full list of arguments available:
 
 The `--due`, `--range`, `--tag`, or `--today` parameter is required, at a minimum.
 
-Note that nothing will be returned if no tasks match the given arguments.
+Notes:
 
-Currently, any tasks tagged `personal` or `pers` are not included in the output.
+- nothing will be returned if no tasks match the given arguments; and
+- any tasks tagged with any tags in `SKIP_TAGS` as defined in `.env` are not included in the output.
 
 # Examples
 

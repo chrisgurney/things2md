@@ -15,10 +15,19 @@ from dotenv import load_dotenv
 # CONFIGURATION
 # #############################################################################
 
+# get config from .env
 load_dotenv()
 
-# get path to main.sqllite from .env
-THINGS_DB = os.getenv("THINGS_DB")
+# required
+ENV_THINGS_DB = os.getenv("THINGS_DB")
+if not ENV_THINGS_DB:
+    print(f"ERROR: .env is missing the THINGS_DB variable (path to your Things database)")
+    exit()
+
+# optional
+ENV_SKIP_TAGS = os.getenv("SKIP_TAGS")
+if ENV_SKIP_TAGS:
+    ENV_SKIP_TAGS = ENV_SKIP_TAGS.split(",")
 
 # #############################################################################
 # CLI ARGUMENTS
@@ -173,7 +182,7 @@ def query_projects(end_time):
         p.uuid
     """
 
-    conn = sqlite3.connect(THINGS_DB)
+    conn = sqlite3.connect(ENV_THINGS_DB)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
@@ -202,7 +211,7 @@ def query_subtasks(task_ids):
         c.task, [index]
     """
 
-    conn = sqlite3.connect(THINGS_DB)
+    conn = sqlite3.connect(ENV_THINGS_DB)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
@@ -292,7 +301,7 @@ def query_tasks(end_time):
     LIMIT {QUERY_LIMIT}
     """
 
-    conn = sqlite3.connect(THINGS_DB)
+    conn = sqlite3.connect(ENV_THINGS_DB)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
@@ -326,7 +335,7 @@ def get_gcal_link(task_id, task_title):
 # MAIN
 # #############################################################################
 
-if DEBUG: print("THINGS_DB:\n{}".format(THINGS_DB))
+if DEBUG: print("THINGS_DB:\n{}".format(ENV_THINGS_DB))
 if DEBUG: print("PARAMS:\n{}".format(args))
 
 start_time = None
@@ -379,10 +388,11 @@ for row in task_results:
     # pre-process tags and skip
     taskTags = ""
     if row['tags'] != None:
-        if "personal" in row['tags'] or "pers" in row['tags']:
-            skipped_tasks[row['uuid']] = dict(row)
-            if DEBUG: print(f"... SKIPPED (personal|pers tag): {dict(row)}")
-            continue
+        if ENV_SKIP_TAGS:
+            if any(item in row['tags'] for item in ENV_SKIP_TAGS):
+                skipped_tasks[row['uuid']] = dict(row)
+                if DEBUG: print(f"... SKIPPED (TAG): {dict(row)}")
+                continue
         taskTags = " #" + row['tags']
     if DEBUG: print(dict(row))
     # project name
