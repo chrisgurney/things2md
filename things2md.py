@@ -367,6 +367,7 @@ for row in project_results:
 
 completed_work_tasks = {}
 cancelled_work_tasks = {}
+skipped_tasks = {}
 completed_work_task_ids = []
 task_notes = {}
 
@@ -379,6 +380,7 @@ for row in task_results:
     taskTags = ""
     if row['tags'] != None:
         if "personal" in row['tags'] or "pers" in row['tags']:
+            skipped_tasks[row['uuid']] = dict(row)
             if DEBUG: print(f"... SKIPPED (personal|pers tag): {dict(row)}")
             continue
         taskTags = " #" + row['tags']
@@ -448,6 +450,7 @@ for row in task_results:
 if DEBUG:
     print(f"\nTASKS COMPLETED ({len(completed_work_tasks)}):\n{completed_work_tasks}")
     print(f"\nCOMPLETED NOTES ({len(task_notes)}):\n{task_notes}")
+    print(f"\nSKIPPED TASKS ({len(skipped_tasks)}):\n{skipped_tasks}")
 
 #
 # Get Subtasks (for completed tasks)
