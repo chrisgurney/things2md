@@ -23,6 +23,7 @@ ENV_THINGS_DB = os.getenv("THINGS_DB")
 if not ENV_THINGS_DB:
     print(f"ERROR: .env is missing the THINGS_DB variable (path to your Things database)")
     exit()
+ENV_THINGS_DB = os.path.expanduser(ENV_THINGS_DB)
 
 # optional
 ENV_SKIP_TAGS = os.getenv("SKIP_TAGS")
