@@ -240,6 +240,8 @@ def query_tasks(end_time):
     if ARG_ORDERBY == "project":
         # FIX: doesn't actually sort by name (just by ID)
         orderby_clause = 'TMTask.project ASC, TMTask.stopDate DESC'
+    elif ARG_TODAY:
+        orderby_clause = 'TMTask.startBucket, TMTask.todayIndex'
     elif ARG_ORDERBY == "index":
         orderby_clause = 'TMTask.todayIndex'
     elif ARG_DUE:

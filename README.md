@@ -78,12 +78,8 @@ python3 things2md.py --range "1 week ago" --orderby project --simple
 ## Listing Todo Tasks
 
 _BETA:_ Show uncompleted tasks in Today.
-
-> [!WARNING]
-> Known issue:
-> - Evening tasks seem to be showing at the top of the list.
 ```
-python3 things2md.py --today --orderby index
+python3 things2md.py --today
 ```
 
 _To further narrow down tasks to be done, I tag them with a special tag and retrieve just those tasks:_
