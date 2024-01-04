@@ -441,14 +441,14 @@ for row in task_results:
             # link to it in Things
             work_task += f"{remove_emojis(row['title'])} [↗]({THINGS_SHOW_URL_BASE}{row['uuid']})"
         else:
-            work_task += row['title']
+            work_task += row['title'].strip()
         # task date
         if work_task_date != "":
             if ARG_GROUPBY != "date" or (ARG_SIMPLE and ARG_RANGE not in ('today', 'yesterday')):
                 work_task += f" • {work_task_date}"
         # gcal link
         if ARG_GCAL_LINKS:
-            work_task += f" {get_gcal_link(row['uuid'], row['title'])}"
+            work_task += f" • {get_gcal_link(row['uuid'], row['title'])}"
         if row['deadline']:
             work_task += f" • ⚑ {row['deadline']}"
     # task tags
