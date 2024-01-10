@@ -193,7 +193,7 @@ def query_tasks(end_time):
     # https://thingsapi.github.io/things.py/things/api.html#tasks
     # 
     # TODO: if filepath can be omitted; things.py will find default location
-    kwargs = dict(filepath=THINGS_DB)
+    kwargs = dict(filepath=ENV_THINGS_DB)
 
     if end_time is not None:
         kwargs['status'] = None
@@ -209,8 +209,8 @@ def query_tasks(end_time):
         kwargs['stop_date'] = False
     elif ARG_TODAY:
         kwargs['start_date'] = True
-        kwargs['status'] = 'incomplete'
-        kwargs['start'] = 'Inbox'
+        kwargs['start'] = 'Anytime'
+        kwargs['index'] = 'todayIndex'
 
     if ARG_ORDERBY == "index":
         kwargs['index'] = 'todayIndex'
@@ -227,10 +227,12 @@ def query_tasks(end_time):
         pass
     elif ARG_DUE:
         tasks.sort(key=lambda x: x['deadline'])
+    elif ARG_TODAY:
+        pass
     else:
         tasks.sort(key=lambda x: x['stop_date'], reverse=True)
 
-  return tasks[:QUERY_LIMIT]
+    return tasks[:QUERY_LIMIT]
 
 def remove_emojis(input_string):
     '''
@@ -260,15 +262,17 @@ if DEBUG: print("THINGS_DB:\n{}".format(ENV_THINGS_DB))
 if DEBUG: print("PARAMS:\n{}".format(args))
 
 start_time = None
+start_time_as_isodate = None
 end_time = None
 if ARG_RANGE is not None:
     start_time, end_time = get_time_range(ARG_RANGE)
     if start_time == None:
         print(f"Error: Invalid date range: {ARG_RANGE}")
         exit()
+    start_time_as_isodate = start_time and datetime.fromtimestamp(start_time).date().isoformat()
     if DEBUG: print(f"\nDATE RANGE:\n\"{ARG_RANGE}\" -> {start_time}, {end_time}")
     if DEBUG: print(f"  -> {datetime.fromtimestamp(start_time)}, {end_time and datetime.fromtimestamp(end_time)}")
-start_time_as_isodate = start_time and datetime.fromtimestamp(start_time).date().isoformat()
+    if DEBUG: print(f"  -> {start_time_as_isodate}")
 
 if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_INT}, TODAY_TIMESTAMP: {TODAY_TIMESTAMP}")
 
@@ -309,13 +313,13 @@ if DEBUG: print(f"\nTASKS ({len(task_results)}):")
 for row in task_results:
     # pre-process tags and skip
     taskTags = ""
-    if row.get['tags'] is not None:
+    if 'tags' in row:
         if ENV_SKIP_TAGS:
-            if any(item in row.get['tags'] for item in ENV_SKIP_TAGS):
-                skipped_tasks[row.get['uuid']] = dict(row)
+            if any(item in row['tags'] for item in ENV_SKIP_TAGS):
+                skipped_tasks[row['uuid']] = dict(row)
                 if DEBUG: print(f"... SKIPPED (TAG): {dict(row)}")
                 continue
-        taskTags = " #" + row['tags']
+        taskTags = " #".join(row['tags'])
     if DEBUG: print(dict(row))
     # project name
     taskProject = ""
