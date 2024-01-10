@@ -4,12 +4,12 @@
 
 import argparse
 import os
+import sqlite3
 import re
 import urllib.parse
 from datetime import datetime
 from dateutil.relativedelta import *
 from dotenv import load_dotenv
-import things
 
 # #############################################################################
 # CONFIGURATION
@@ -18,8 +18,7 @@ import things
 # get config from .env
 load_dotenv()
 
-# get path to main.sqllite from .env
-# TODO: Note: can also automatically be deduced by things.py
+# required
 ENV_THINGS_DB = os.getenv("THINGS_DB")
 if not ENV_THINGS_DB:
     print(f"ERROR: .env is missing the THINGS_DB variable (path to your Things database)")
@@ -93,6 +92,8 @@ GCAL_EVENT_DATES = f"{event_start_rfc5545}/{event_finish_rfc5545}"
 
 QUERY_LIMIT = 100
 
+THINGS_SHOW_URL_BASE = "things:///show?id="
+
 TODAY = datetime.today()
 TODAY_DATE = TODAY.date()
 TODAY_INT = int(TODAY_DATE.strftime('%Y%m%d'))
@@ -163,74 +164,156 @@ def query_projects(end_time):
     '''
     Fetches projects not finished, or finished after the timestamp provided.
     '''
+    where_clause = 'AND p.stopDate IS NULL '
+    if end_time != None:
+        where_clause = f'AND (p.stopDate IS NULL OR p.stopDate > {end_time}) '
 
-    # TODO: filepath can be omitted; things.py will find default location
-    kwargs = dict(status=None, filepath=ENV_THINGS_DB)
-    if DEBUG: kwargs['print_sql'] = True; print("\nPROJECT QUERY:")
+    PROJECT_QUERY = f"""
+    SELECT
+        p.uuid as uuid,
+        p.title as title,
+        p.stopDate as stopDate
+    FROM
+        TMTask t
+    INNER JOIN TMTask p ON p.uuid = t.project
+    WHERE
+        p.trashed = 0
+        {where_clause}
+    GROUP BY
+        p.uuid
+    """
 
-    projects = things.projects(stop_date=False, **kwargs)
-    if end_time is not None:
-        projects += things.projects(stop_date=f'>{end_time}', **kwargs)
+    conn = sqlite3.connect(ENV_THINGS_DB)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
 
-    return projects
+    if DEBUG: print("\nPROJECT QUERY:" + PROJECT_QUERY)
+    cursor.execute(PROJECT_QUERY)
+    project_results = cursor.fetchall()
+    conn.close()
+
+    return project_results
 
 def query_subtasks(task_ids):
     '''
     Fetches subtasks given a list of task IDs.
     '''
-    # TODO: filepath can be omitted; things.py will find default location
-    kwargs = dict(include_items=True, filepath=ENV_THINGS_DB)
-    if DEBUG: print("\nSUBTASK QUERY:"); kwargs['print_sql'] = True
-    return [things.todos(task_id, **kwargs) for task_id in task_ids]
+    SUBTASK_QUERY = f"""
+    SELECT
+        c.uuid as uuid,
+        c.task as task,
+        c.title as title,
+        c.stopDate as stopDate
+    FROM
+        TMChecklistItem c
+    WHERE
+        c.task IN ({','.join(['?']*len(task_ids))})
+    ORDER BY
+        c.task, [index]
+    """
+
+    conn = sqlite3.connect(ENV_THINGS_DB)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    if DEBUG: print("\nSUBTASK QUERY:" + SUBTASK_QUERY)
+    cursor.execute(SUBTASK_QUERY, task_ids)
+    subtask_results = cursor.fetchall()
+    conn.close()
+
+    return subtask_results
 
 def query_tasks(end_time):
     '''
     Fetches tasks completed after the timestamp provided.
     '''
     # FUTURE: if both args provided, why not filter on both?
-
-    # things.py parameter documention here:
-    # https://thingsapi.github.io/things.py/things/api.html#tasks
-    # 
-    # TODO: if filepath can be omitted; things.py will find default location
-    kwargs = dict(filepath=THINGS_DB)
-
-    if end_time is not None:
-        kwargs['status'] = None
-        kwargs['stop_date'] = f'>{end_time}'
+    where_clause = ''
+    if end_time != None:
+        where_clause = f'AND stopDate IS NOT NULL AND stopDate > {end_time} '
     elif ARG_DUE:
-        kwargs['deadline'] = True
-        kwargs['start_date'] = True
-        kwargs['status'] = 'incomplete'
-        kwargs['start'] = 'Inbox'
-    elif ARG_TAG is not None:
-        kwargs['search_query'] = ARG_TAG
-        kwargs['status'] = None
-        kwargs['stop_date'] = False
+        where_clause = f'AND deadline IS NOT NULL AND startDate IS NOT NULL AND status = 0 AND start IN (1, 2) '
+    elif ARG_TAG != None:
+        where_clause = f'AND TMTag.title LIKE "%{ARG_TAG}%" AND stopDate IS NULL '
     elif ARG_TODAY:
-        kwargs['start_date'] = True
-        kwargs['status'] = 'incomplete'
-        kwargs['start'] = 'Inbox'
-
-    if ARG_ORDERBY == "index":
-        kwargs['index'] = 'todayIndex'
-
-    if DEBUG: kwargs['print_sql'] = True; print("\nTASK QUERY:")
-
-    tasks = things.tasks(**kwargs)
+        where_clause = f'AND startDateAsInt IS NOT NULL AND startDateAsInt = {TODAY_INT} AND status = 0 AND start IN (1, 2) '
 
     if ARG_ORDERBY == "project":
-        # FIXED: does sort by name
-        tasks.sort(key=lambda x: x['stop_date'], reverse=True)
-        tasks.sort(key=lambda x: x['project_title'])
-    elif ARG_ORDERBY == 'index':
-        pass
+        # FIX: doesn't actually sort by name (just by ID)
+        orderby_clause = 'TMTask.project ASC, TMTask.stopDate DESC'
+    elif ARG_TODAY:
+        orderby_clause = 'TMTask.startBucket, TMTask.todayIndex'
+    elif ARG_ORDERBY == "index":
+        orderby_clause = 'TMTask.todayIndex'
     elif ARG_DUE:
-        tasks.sort(key=lambda x: x['deadline'])
+        orderby_clause = 'deadline'
     else:
-        tasks.sort(key=lambda x: x['stop_date'], reverse=True)
+        orderby_clause = 'TMTask.stopDate DESC'
 
-  return tasks[:QUERY_LIMIT]
+    TASK_QUERY = f"""
+    SELECT
+        TMTask.uuid as uuid,
+        TMTask.title as title,
+        TMTask.notes as notes,
+        CAST(
+            CASE
+                WHEN TMTask.startDate
+            THEN
+                format(
+                    '%d%02d%02d',
+                    (TMTask.startDate & 134152192) >> 16,
+                    (TMTask.startDate & 61440) >> 12,
+                    (TMTask.startDate & 3968) >> 7
+                )
+            ELSE
+                TMTask.startDate
+            END
+        AS INTEGER) AS startDateAsInt,
+        TMTask.stopDate as stopDate,
+        TMTask.status as status,
+        TMTask.project as project,
+        TMTask.type as type,
+        date(
+            CASE
+                WHEN TMTask.deadline
+            THEN
+                format(
+                    '%d-%02d-%02d',
+                    (TMTask.deadline & 134152192) >> 16,
+                    (TMTask.deadline & 61440) >> 12,
+                    (TMTask.deadline & 3968) >> 7
+                )
+            ELSE
+                TMTask.deadline
+            END
+        ) AS deadline,
+        GROUP_CONCAT(TMTag.title, ' #') as tags
+    FROM
+        TMTask
+    LEFT JOIN TMTaskTag
+        ON TMTaskTag.tasks = TMTask.uuid
+    LEFT JOIN TMTag
+        ON TMTag.uuid = TMTaskTag.tags
+    WHERE
+        TMTask.trashed = 0
+        {where_clause}
+    GROUP BY
+        TMTask.uuid
+    ORDER BY
+        {orderby_clause}
+    LIMIT {QUERY_LIMIT}
+    """
+
+    conn = sqlite3.connect(ENV_THINGS_DB)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    if DEBUG: print("\nTASK QUERY:" + TASK_QUERY)
+    cursor.execute(TASK_QUERY)
+    task_results = cursor.fetchall()
+    conn.close()
+
+    return task_results
 
 def remove_emojis(input_string):
     '''
@@ -246,8 +329,7 @@ def get_gcal_link(task_id, task_title):
     '''
     url_base = "https://calendar.google.com/calendar/u/0/r/eventedit"
     event_text = urllib.parse.quote_plus(task_title) # encode url
-    things_url = things.link(task_id)
-    event_details = f'<a href="{things_url}">{things_url}</a>'
+    event_details = f'<a href="things:///show?id={task_id}">things:///show?id={task_id}</a>'
     event_details = urllib.parse.quote_plus(event_details) # encode url
     url=f"{url_base}?text={event_text}&dates={GCAL_EVENT_DATES}&details={event_details}"
     return f"[📅]({url})"
@@ -261,14 +343,13 @@ if DEBUG: print("PARAMS:\n{}".format(args))
 
 start_time = None
 end_time = None
-if ARG_RANGE is not None:
+if ARG_RANGE != None:
     start_time, end_time = get_time_range(ARG_RANGE)
     if start_time == None:
         print(f"Error: Invalid date range: {ARG_RANGE}")
         exit()
     if DEBUG: print(f"\nDATE RANGE:\n\"{ARG_RANGE}\" -> {start_time}, {end_time}")
-    if DEBUG: print(f"  -> {datetime.fromtimestamp(start_time)}, {end_time and datetime.fromtimestamp(end_time)}")
-start_time_as_isodate = start_time and datetime.fromtimestamp(start_time).date().isoformat()
+    if DEBUG: print(f"  -> {datetime.fromtimestamp(start_time)}, {datetime.fromtimestamp(end_time)}")
 
 if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_INT}, TODAY_TIMESTAMP: {TODAY_TIMESTAMP}")
 
@@ -276,13 +357,13 @@ if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_
 # Get Tasks
 #
 
-task_results = query_tasks(start_time_as_isodate)
+task_results = query_tasks(start_time)
 
 #
 # Get Projects
 #
 
-project_results = query_projects(start_time_as_isodate)
+project_results = query_projects(start_time)
 
 # format projects:
 # store in associative array for easier reference later and strip out project emojis
@@ -309,10 +390,10 @@ if DEBUG: print(f"\nTASKS ({len(task_results)}):")
 for row in task_results:
     # pre-process tags and skip
     taskTags = ""
-    if row.get['tags'] is not None:
+    if row['tags'] != None:
         if ENV_SKIP_TAGS:
-            if any(item in row.get['tags'] for item in ENV_SKIP_TAGS):
-                skipped_tasks[row.get['uuid']] = dict(row)
+            if any(item in row['tags'] for item in ENV_SKIP_TAGS):
+                skipped_tasks[row['uuid']] = dict(row)
                 if DEBUG: print(f"... SKIPPED (TAG): {dict(row)}")
                 continue
         taskTags = " #" + row['tags']
@@ -320,13 +401,13 @@ for row in task_results:
     # project name
     taskProject = ""
     taskProjectRaw = "No Project"
-    if row.get('project') is not None:
+    if row['project'] != None:
         taskProjectRaw = projects[row['project']]
         taskProject = f"{taskProjectRaw} // "
     # task date
     work_task_date = ""
-    if row.get('stop_date') is not None:
-        work_task_date = row['stop_date']
+    if row['stopDate'] != None:
+        work_task_date = datetime.fromtimestamp(row['stopDate']).date()
     # header
     if not ARG_SIMPLE:
         if ARG_GROUPBY == "date":
@@ -345,9 +426,9 @@ for row in task_results:
     else:
         work_task = "- "
         if not ARG_SIMPLE:
-            if row['status'] == 'incomplete':
+            if row['status'] == 0:
                 work_task += "[ ] "
-            elif row['status'] == 'canceled':
+            elif row['status'] == 2:
                 work_task += "[x] "
             else:
                 work_task += "[/] "
@@ -356,9 +437,9 @@ for row in task_results:
             work_task += f"{taskProject}"
         # task name
         # if it's a project
-        if row['type'] == 'project':
+        if row['type'] == 1:
             # link to it in Things
-            work_task += f"{remove_emojis(row['title'])} [↗]({things.link(row['uuid'])})"
+            work_task += f"{remove_emojis(row['title'])} [↗]({THINGS_SHOW_URL_BASE}{row['uuid']})"
         else:
             work_task += row['title'].strip()
         # task date
@@ -367,16 +448,16 @@ for row in task_results:
                 work_task += f" • {work_task_date}"
         # gcal link
         if ARG_GCAL_LINKS:
-            work_task += f" {get_gcal_link(row['uuid'], row['title'])}"
-        if row.get('deadline'):
+            work_task += f" • {get_gcal_link(row['uuid'], row['title'])}"
+        if row['deadline']:
             work_task += f" • ⚑ {row['deadline']}"
     # task tags
     # work_task += f" • {taskTags}"
     completed_work_tasks[row['uuid']] = work_task
-    if row['status'] == 'canceled':
+    if row['status'] == 2:
         cancelled_work_tasks[row['uuid']] = work_task
     completed_work_task_ids.append(row['uuid'])
-    if row.get('notes'):
+    if row['notes']:
         task_notes[row['uuid']] = row['notes']
         
 if DEBUG:
@@ -390,28 +471,27 @@ if DEBUG:
 
 if not ARG_SIMPLE:
     subtask_results = query_subtasks(completed_work_task_ids)
-    subtask_results = [todo for todo in subtask_results if todo.get('checklist')]
 
-    if DEBUG: print(f"TASKS WITH SUBTASKS ({len(subtask_results)}):")
+    if DEBUG: print(f"SUBTASKS ({len(subtask_results)}):")
+
     # format subtasks
     task_subtasks = {}
     for row in subtask_results:
-        if DEBUG: print(row['uuid'], row.get('title'))
-        if row['uuid'] in task_subtasks:
-            subtask = task_subtasks[row['uuid']] + "\n"
+        if DEBUG: print(dict(row))
+        if row['task'] in task_subtasks:
+            subtask = task_subtasks[row['task']] + "\n"
         else:
             subtask = ""
-        for checklist_item in row.get('checklist'):
-            if ARG_FORMAT == "import":
-                subtask += "- "
+        if ARG_FORMAT == "import":
+            subtask += "- "
+        else:
+            subtask += "\t- "
+            if row['stopDate'] != None:
+                subtask += "[/] "
             else:
-                subtask += "\t- "
-                if checklist_item.get('stop_date') is not None:
-                    subtask += "[/] "
-                else:
-                    subtask += "[ ] "
-            subtask += row['title']
-        task_subtasks[row['uuid']] = subtask
+                subtask += "[ ] "
+        subtask += row['title']
+        task_subtasks[row['task']] = subtask
 
     if DEBUG: print(task_subtasks)
 

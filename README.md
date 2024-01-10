@@ -4,7 +4,10 @@ Things3 database -> Markdown conversion script.
 
 `pip3 install -r requirements.txt`
 
-Copy `.env.example` to `.env` and update with the path to your Things3 sqlite database file.
+Copy `.env.example` to `.env` and set:
+
+- Required: `THINGS_DB` = the path to your Things3 sqlite database file, for example: `"~/Library/Group Containers/JLMPQHK86H.com.culturedcode.ThingsMac/ThingsData-X342B/Things Database.thingsdatabase/main.sqlite"`
+- Optional: `SKIP_TAGS` = a comma-separated list of tags for any tasks you do not want included in output, for example: `"personal,pers"`
 
 # Usage
 
@@ -28,9 +31,10 @@ Run without any parameters to see the full list of arguments available:
 
 The `--due`, `--range`, `--tag`, or `--today` parameter is required, at a minimum.
 
-Note that nothing will be returned if no tasks match the given arguments.
+Notes:
 
-Currently, any tasks tagged `personal` or `pers` are not included in the output.
+- nothing will be returned if no tasks match the given arguments; and
+- any tasks tagged with any tags in `SKIP_TAGS` as defined in `.env` are not included in the output.
 
 # Examples
 
@@ -74,12 +78,8 @@ python3 things2md.py --range "1 week ago" --orderby project --simple
 ## Listing Todo Tasks
 
 _BETA:_ Show uncompleted tasks in Today.
-
-> [!WARNING]
-> Known issue:
-> - Evening tasks seem to be showing at the top of the list.
 ```
-python3 things2md.py --today --orderby index
+python3 things2md.py --today
 ```
 
 _To further narrow down tasks to be done, I tag them with a special tag and retrieve just those tasks:_
