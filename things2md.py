@@ -327,7 +327,7 @@ for row in task_results:
     # task date
     work_task_date = ""
     if row.get('stop_date') is not None:
-        work_task_date = row['stop_date']
+        work_task_date = datetime.fromisoformat(row['stop_date']).date()
     # header
     if not ARG_SIMPLE:
         if ARG_GROUPBY == "date":
