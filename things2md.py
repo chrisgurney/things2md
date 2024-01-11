@@ -390,19 +390,19 @@ if DEBUG:
 # 
 
 if not ARG_SIMPLE:
-    subtask_results = query_subtasks(completed_work_task_ids)
-    subtask_results = [todo for todo in subtask_results if todo.get('checklist')]
+    tasks_with_subtasks = query_subtasks(completed_work_task_ids)
+    tasks_with_subtasks = [todo for todo in tasks_with_subtasks if todo.get('checklist')]
 
-    if DEBUG: print(f"TASKS WITH SUBTASKS ({len(subtask_results)}):")
+    if DEBUG: print(f"TASKS WITH SUBTASKS ({len(tasks_with_subtasks)}):")
     # format subtasks
     task_subtasks = {}
-    for row in subtask_results:
+    for row in tasks_with_subtasks:
         if DEBUG: print(row['uuid'], row.get('title'))
-        if row['uuid'] in task_subtasks:
-            subtask = task_subtasks[row['uuid']] + "\n"
-        else:
-            subtask = ""
         for checklist_item in row.get('checklist'):
+            if row['uuid'] in task_subtasks:
+                subtask = task_subtasks[row['uuid']] + "\n"
+            else:
+                subtask = ""
             if ARG_FORMAT == "import":
                 subtask += "- "
             else:
@@ -411,8 +411,8 @@ if not ARG_SIMPLE:
                     subtask += "[/] "
                 else:
                     subtask += "[ ] "
-            subtask += row['title']
-        task_subtasks[row['uuid']] = subtask
+            subtask += checklist_item['title']
+            task_subtasks[row['uuid']] = subtask
 
     if DEBUG: print(task_subtasks)
 
