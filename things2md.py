@@ -223,7 +223,7 @@ def query_tasks(end_time):
     if ARG_ORDERBY == "project":
         # FIXED: does sort by name
         tasks.sort(key=lambda x: x['stop_date'], reverse=True)
-        tasks.sort(key=lambda x: x['project_title'])
+        tasks.sort(key=lambda x: x.get("project_title",""))
     elif ARG_ORDERBY == 'index':
         pass
     elif ARG_DUE:
