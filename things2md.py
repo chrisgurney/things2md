@@ -106,13 +106,15 @@ TOMORROW_TIMESTAMP = TOMORROW.timestamp()
 
 def get_time_range(date_range):
     '''
-    Returns timestamps for the given date range, relative to today.
+    Returns ISO dates for the given date range, relative to today.
     Supported: today, yesterday, X days ago, X weeks ago, X months ago, X years ago
     "this week" is also supported, and starts on Monday
     '''
     splitted = date_range.split()
     start_time = None
     end_time = None
+    start_date = None
+    end_date = None
     if date_range == "this week":
         start_date = TODAY - relativedelta(days=TODAY.weekday())
         end_date = start_date + relativedelta(days=6)
@@ -137,18 +139,17 @@ def get_time_range(date_range):
         start_time = start_date.timestamp()
 
     if start_time:
-        # get midnight of the day requested, to ensure we get all tasks
-        start_date = datetime.fromtimestamp(float(start_time))
-        start_date = datetime(start_date.year, start_date.month, start_date.day)
-        start_time = start_date.timestamp()
+        # get the day previous to the one requested, to ensure we get all tasks
+        start_date = datetime.fromtimestamp(float(start_time)) - relativedelta(days=1)
+        start_date = start_date.date().isoformat()
 
     if end_time:
+        # TODO: return end_date with adjustment
         # get 11:59:59 of the day requested, to ensure we get all tasks
         end_date = datetime.fromtimestamp(float(end_time))
-        end_date = datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59)
-        end_time = end_date.timestamp()
+        end_date = end_date.date().isoformat()
 
-    return start_time, end_time
+    return start_date, end_date
 
 def indent_string(string_to_indent):
     '''
@@ -261,18 +262,14 @@ def get_gcal_link(task_id, task_title):
 if DEBUG: print("THINGS_DB:\n{}".format(ENV_THINGS_DB))
 if DEBUG: print("PARAMS:\n{}".format(args))
 
-start_time = None
-start_time_as_isodate = None
-end_time = None
+start_date = None
+end_date = None
 if ARG_RANGE is not None:
-    start_time, end_time = get_time_range(ARG_RANGE)
-    if start_time == None:
+    start_date, end_date = get_time_range(ARG_RANGE)
+    if start_date == None:
         print(f"Error: Invalid date range: {ARG_RANGE}")
         exit()
-    start_time_as_isodate = start_time and datetime.fromtimestamp(start_time).date().isoformat()
-    if DEBUG: print(f"\nDATE RANGE:\n\"{ARG_RANGE}\" -> {start_time}, {end_time}")
-    if DEBUG: print(f"  -> {datetime.fromtimestamp(start_time)}, {end_time and datetime.fromtimestamp(end_time)}")
-    if DEBUG: print(f"  -> {start_time_as_isodate}")
+    if DEBUG: print(f"\nDATE RANGE:\n\"{ARG_RANGE}\" == {start_date} to {end_date}")
 
 if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_INT}, TODAY_TIMESTAMP: {TODAY_TIMESTAMP}")
 
@@ -280,13 +277,13 @@ if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_
 # Get Tasks
 #
 
-task_results = query_tasks(start_time_as_isodate)
+task_results = query_tasks(start_date)
 
 #
 # Get Projects
 #
 
-project_results = query_projects(start_time_as_isodate)
+project_results = query_projects(start_date)
 
 # format projects:
 # store in associative array for easier reference later and strip out project emojis
