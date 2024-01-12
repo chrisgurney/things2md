@@ -203,7 +203,6 @@ def query_tasks(end_time):
         kwargs['deadline'] = True
         kwargs['start_date'] = True
         kwargs['status'] = 'incomplete'
-        kwargs['start'] = 'Inbox'
     elif ARG_TAG is not None:
         kwargs['tag'] = ARG_TAG
         kwargs['status'] = 'incomplete'
