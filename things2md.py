@@ -205,8 +205,9 @@ def query_tasks(end_time):
         kwargs['status'] = 'incomplete'
         kwargs['start'] = 'Inbox'
     elif ARG_TAG is not None:
-        kwargs['search_query'] = ARG_TAG
-        kwargs['status'] = None
+        kwargs['tag'] = ARG_TAG
+        kwargs['status'] = 'incomplete'
+        kwargs['start_date'] = None
         kwargs['stop_date'] = False
     elif ARG_TODAY:
         kwargs['start_date'] = True
@@ -229,6 +230,8 @@ def query_tasks(end_time):
     elif ARG_DUE:
         tasks.sort(key=lambda x: x['deadline'])
     elif ARG_TODAY:
+        pass
+    elif ARG_TAG:
         pass
     else:
         tasks.sort(key=lambda x: x['stop_date'], reverse=True)
