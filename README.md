@@ -26,7 +26,7 @@ Run without any parameters to see the full list of arguments available:
 --simple            If set will hide task subtasks + notes and cancelled tasks.
 --tag TAG           If provided, only uncompleted tasks with this tag are fetched.
 --today             If set will show incomplete tasks in Today.
---oprojects         If set will show a list of projects, formatted for Obsidian.
+--oprojects         If set will show a list of projects, formatted for Obsidian + Dataview.
 ```
 
 The `--due`, `--range`, `--tag`, or `--today` parameter is required, at a minimum.

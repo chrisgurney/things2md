@@ -39,7 +39,7 @@ parser.add_argument('--range', help='Relative date range to get completed tasks 
 parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks + notes and cancelled tasks.')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
-parser.add_argument('--oprojects', default=False, action='store_true', help='If set will show a list of projects, formatted for Obsidian.')
+parser.add_argument('--oprojects', default=False, action='store_true', help='If set will show a list of projects, formatted for Obsidian + Dataview.')
 
 args = parser.parse_args()
 
