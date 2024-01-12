@@ -117,5 +117,5 @@ I call this script via the [shell commands community plugin](https://github.com/
 # References
 
 - [obsidian-things-logbook](https://github.com/liamcain/obsidian-things-logbook) - This is an [Obsidian](https://obsidian.md/) plugin that periodically syncs the Things logook with your Obsidian vault. This wasn't the behavior I was looking for, hence why I developed `things2md`.
-- [things.py](https://github.com/thingsapi/things.py) - Had I done more research first, I may have maybe used this instead of writing my own script, but I'm definitely learning from it now! For example, [how some dates are stored](https://github.com/thingsapi/things.py/issues/98).
+- [things.py](https://github.com/thingsapi/things.py) - Had I done more research first, I may have maybe used this instead of writing my own SQL queries. `things2md` has now been refactored to use this library, thanks to contributions from [@mikez](https://github.com/mikez)!
 - [things.sh](https://github.com/AlexanderWillner/things.sh) - I found this shell script late in the development of `things2md`, but it looks like another good interpretation of how to query the Things database.
