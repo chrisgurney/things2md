@@ -246,7 +246,6 @@ def get_gcal_link(task_id, task_title):
 # MAIN
 # #############################################################################
 
-if DEBUG: print("THINGS_DB:\n{}".format(ENV_THINGS_DB))
 if DEBUG: print("PARAMS:\n{}".format(args))
 
 start_date = None
