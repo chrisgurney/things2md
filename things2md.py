@@ -18,14 +18,6 @@ import things
 # get config from .env
 load_dotenv()
 
-# get path to main.sqllite from .env
-# TODO: Note: can also automatically be deduced by things.py
-ENV_THINGS_DB = os.getenv("THINGS_DB")
-if not ENV_THINGS_DB:
-    print(f"ERROR: .env is missing the THINGS_DB variable (path to your Things database)")
-    exit()
-ENV_THINGS_DB = os.path.expanduser(ENV_THINGS_DB)
-
 # optional
 ENV_SKIP_TAGS = os.getenv("SKIP_TAGS")
 if ENV_SKIP_TAGS:
@@ -164,9 +156,7 @@ def query_projects(end_time):
     '''
     Fetches projects not finished, or finished after the timestamp provided.
     '''
-
-    # TODO: filepath can be omitted; things.py will find default location
-    kwargs = dict(status=None, filepath=ENV_THINGS_DB)
+    kwargs = dict(status=None)
     if DEBUG: kwargs['print_sql'] = True; print("\nPROJECT QUERY:")
 
     projects = things.projects(stop_date=False, **kwargs)
@@ -179,8 +169,7 @@ def query_subtasks(task_ids):
     '''
     Fetches subtasks given a list of task IDs.
     '''
-    # TODO: filepath can be omitted; things.py will find default location
-    kwargs = dict(include_items=True, filepath=ENV_THINGS_DB)
+    kwargs = dict(include_items=True)
     if DEBUG: print("\nSUBTASK QUERY:"); kwargs['print_sql'] = True
     return [things.todos(task_id, **kwargs) for task_id in task_ids]
 
@@ -188,13 +177,9 @@ def query_tasks(end_time):
     '''
     Fetches tasks completed after the timestamp provided.
     '''
-    # FUTURE: if both args provided, why not filter on both?
-
     # things.py parameter documention here:
     # https://thingsapi.github.io/things.py/things/api.html#tasks
-    # 
-    # TODO: if filepath can be omitted; things.py will find default location
-    kwargs = dict(filepath=ENV_THINGS_DB)
+    kwargs = dict()
 
     if end_time is not None:
         kwargs['status'] = None

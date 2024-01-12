@@ -6,7 +6,6 @@ Things3 database -> Markdown conversion script.
 
 Copy `.env.example` to `.env` and set:
 
-- Required: `THINGS_DB` = the path to your Things3 sqlite database file, for example: `"~/Library/Group Containers/JLMPQHK86H.com.culturedcode.ThingsMac/ThingsData-X342B/Things Database.thingsdatabase/main.sqlite"`
 - Optional: `SKIP_TAGS` = a comma-separated list of tags for any tasks you want excluded from the output, for example: `"personal,pers"`; note this only works at the line-item (task) level
 
 # Usage
