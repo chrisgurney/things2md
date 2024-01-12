@@ -39,6 +39,7 @@ parser.add_argument('--range', help='Relative date range to get completed tasks 
 parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks + notes and cancelled tasks.')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
+parser.add_argument('--oprojects', default=False, action='store_true', help='If set will show a list of projects, formatted for Obsidian.')
 
 args = parser.parse_args()
 
@@ -52,8 +53,9 @@ ARG_RANGE = args.range
 ARG_SIMPLE = args.simple # TODO: deprecate and fold into 'format' argument
 ARG_TAG = args.tag
 ARG_TODAY = args.today
+ARG_OPROJECTS = args.oprojects
 
-if ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY and not ARG_DUE:
+if ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY and not ARG_DUE and not ARG_OPROJECTS:
     print(f"ERROR: The --due, --range, --tag, or --today parameter is required")
     parser.print_help()
     exit(0)
@@ -143,6 +145,16 @@ def get_time_range(date_range):
 
     return start_date, end_date
 
+def has_skip_tags(tags_to_check):
+    '''
+    Returns True if any of the tags in the list provided is in ENV_SKIP_TAGS.
+    '''
+    skip = False
+    if ENV_SKIP_TAGS:
+        if any(item in tags_to_check for item in ENV_SKIP_TAGS):
+            skip = True
+    return skip
+
 def indent_string(string_to_indent):
     '''
     Indents a multi-line string with tabs.
@@ -151,6 +163,17 @@ def indent_string(string_to_indent):
     indented_lines = ["\t" + line for line in lines]
     indented_string = "\n".join(indented_lines)
     return indented_string
+
+def query_areas():
+    '''
+    Fetches areas.
+    '''
+    kwargs = dict()
+    if DEBUG: kwargs['print_sql'] = True; print("\AREAS QUERY:")
+
+    areas = things.areas(**kwargs)
+
+    return areas
 
 def query_projects(end_time):
     '''
@@ -242,6 +265,12 @@ def get_gcal_link(task_id, task_title):
     url=f"{url_base}?text={event_text}&dates={GCAL_EVENT_DATES}&details={event_details}"
     return f"[📅]({url})"
 
+def get_things_link(uuid):
+    '''
+    Generates URL for the given task in Things.
+    '''
+    return f"[↗]({things.link(uuid)})"
+
 # #############################################################################
 # MAIN
 # #############################################################################
@@ -263,11 +292,21 @@ if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_
 # Get Tasks
 #
 
-task_results = query_tasks(start_date)
+task_results = {}
+# don't need to get tasks if we're just getting a projects list
+if not ARG_OPROJECTS:
+    task_results = query_tasks(start_date)
 
 #
-# Get Projects
+# Get Areas + Projects
 #
+
+# get area names
+areas = dict()
+if ARG_OPROJECTS:
+    area_results = query_areas()
+    for area in area_results:
+        areas[area['uuid']] = area['title']
 
 project_results = query_projects(start_date)
 
@@ -297,12 +336,11 @@ for row in task_results:
     # pre-process tags and skip
     taskTags = ""
     if 'tags' in row:
-        if ENV_SKIP_TAGS:
-            if any(item in row['tags'] for item in ENV_SKIP_TAGS):
-                skipped_tasks[row['uuid']] = dict(row)
-                if DEBUG: print(f"... SKIPPED (TAG): {dict(row)}")
-                continue
-        taskTags = " #".join(row['tags'])
+        if has_skip_tags(row['tags']):
+            skipped_tasks[row['uuid']] = dict(row)
+            if DEBUG: print(f"... SKIPPED (TAG): {dict(row)}")
+            continue
+        taskTags = " #" + " #".join(row['tags'])
     if DEBUG: print(dict(row))
     # project name
     taskProject = ""
@@ -345,7 +383,7 @@ for row in task_results:
         # if it's a project
         if row['type'] == 'project':
             # link to it in Things
-            work_task += f"{remove_emojis(row['title'])} [↗]({things.link(row['uuid'])})"
+            work_task += f"{remove_emojis(row['title'])} {get_things_link(row['uuid'])})"
         else:
             work_task += row['title'].strip()
         # task date
@@ -435,5 +473,39 @@ if completed_work_tasks:
                     print(f"{indent_string(task_notes[key])}")
                 if key in task_subtasks:
                     print(task_subtasks[key])
+
+# format a list of projects as a list with inline attributes for Obsidian, grouped by area
+if ARG_OPROJECTS:
+    # TODO: refactor repeated code here
+    for p in project_results:
+        if 'area' not in p:
+            projectDeadline = ""
+            projectTags = ""
+            if p['deadline']:
+                projectDeadline = f" (deadline:: ⚑ {p['deadline']})"
+            if 'tags' in p:
+                if has_skip_tags(p['tags']):
+                    continue
+                projectTags = ",".join(p['tags'])
+                projectTags = f" (taglist:: {projectTags})"
+            print(f"- [[{remove_emojis(p['title'])}]] {get_things_link(p['uuid'])}{projectDeadline}{projectTags}")
+    for a in area_results:
+        if 'tags' in a:
+            if has_skip_tags(a['tags']):
+                continue  
+        for p in project_results:
+            if 'area' in p:
+                if p['area'] == a['uuid']:
+                    projectArea = f" (area:: {remove_emojis(p['area_title'])})"
+                    projectDeadline = ""
+                    projectTags = ""
+                    if p['deadline']:
+                        projectDeadline = f" (deadline:: ⚑ {p['deadline']})"
+                    if 'tags' in p:
+                        if has_skip_tags(p['tags']):
+                            continue
+                        projectTags = ",".join(p['tags'])
+                        projectTags = f" (taglist:: {projectTags})"
+                    print(f"- [[{remove_emojis(p['title'])}]] {get_things_link(p['uuid'])}{projectArea}{projectDeadline}{projectTags}")
 
 if DEBUG: print("\nDONE!")
