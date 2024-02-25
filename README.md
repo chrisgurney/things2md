@@ -13,6 +13,7 @@ Copy `.env.example` to `.env` and set:
 Run without any parameters to see the full list of arguments available:
 
 ```
+--date DATE         Date to get completed tasks for, in ISO format (e.g., 2023-10-07).
 --debug             If set will show script debug information.
 --due               If set will show incomplete tasks with deadlines.
 --format {import,noemojis,wikilinks} [{import,noemojis,wikilinks} ...]
@@ -57,6 +58,11 @@ python3 things2md.py --range "today"
 Show tasks completed today, and omit subtasks, notes, and cancelled tasks:
 ```
 python3 things2md.py --range "today" --simple
+```
+
+BETA: Show tasks completed on a specific date (in ISO format). To fix: I think due to dates being stored in GMT, if the completion date falls near midnight, it may show up if you're querying tasks for the next day.
+```
+python3 things2md.py --date 2024-02-25
 ```
 
 Show tasks completed yesterday:

@@ -30,6 +30,7 @@ if ENV_SKIP_TAGS:
 
 parser = argparse.ArgumentParser(description='Things3 database -> Markdown conversion script.', formatter_class=RawTextHelpFormatter)
 
+parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).')
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
 parser.add_argument('--format', nargs='+', choices=['import','noemojis','wikilinks'], help='Format modes. Pick one or more of:\n import: Outputs each task as a formatted note.\n noemojis: Strips emojis.\n wikilinks: Formats project names as wikilinks.')
@@ -45,6 +46,7 @@ parser.add_argument('--oprojects', default=False, action='store_true', help='If 
 args = parser.parse_args()
 
 DEBUG = args.debug
+ARG_DATE = args.date
 ARG_DUE = args.due
 ARG_FORMAT = args.format
 ARG_GCAL_LINKS = args.gcallinks
@@ -56,8 +58,8 @@ ARG_TAG = args.tag
 ARG_TODAY = args.today
 ARG_OPROJECTS = args.oprojects
 
-if ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY and not ARG_DUE and not ARG_OPROJECTS:
-    print(f"ERROR: The --due, --range, --tag, or --today parameter is required")
+if ARG_DATE == None and ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY and not ARG_DUE and not ARG_OPROJECTS:
+    print(f"ERROR: The --date, --due, --range, --tag, or --today parameter is required")
     parser.print_help()
     exit(0)
 
@@ -208,6 +210,9 @@ def query_tasks(end_time):
     if end_time is not None:
         kwargs['status'] = None
         kwargs['stop_date'] = f'>{end_time}'
+    elif ARG_DATE:
+        kwargs['status'] = None
+        kwargs['stop_date'] = f'{ARG_DATE}'
     elif ARG_DUE:
         kwargs['deadline'] = True
         kwargs['start_date'] = True
