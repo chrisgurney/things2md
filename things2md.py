@@ -32,7 +32,7 @@ parser = argparse.ArgumentParser(description='Things3 database -> Markdown conve
 
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
-parser.add_argument('--format', nargs='+', choices=['import','noemojis','wikilinks'], help='Format modes. Pick one or more of:\n import: Outputs each task tagged with "export" as a formatted note.\n noemojis: Strips emojis.\n wikilinks: Formats project names as wikilinks.')
+parser.add_argument('--format', nargs='+', choices=['import','noemojis','wikilinks'], help='Format modes. Pick one or more of:\n import: Outputs each task as a formatted note.\n noemojis: Strips emojis.\n wikilinks: Formats project names as wikilinks.')
 parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')

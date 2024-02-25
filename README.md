@@ -17,7 +17,7 @@ Run without any parameters to see the full list of arguments available:
 --due               If set will show incomplete tasks with deadlines.
 --format {import,noemojis,wikilinks} [{import,noemojis,wikilinks} ...]
                     Format modes. Pick one or more of:
-                     import: Outputs each task tagged with "export" as a formatted note.
+                     import: Outputs each task as a formatted note.
                      noemojis: Strips emojis.
                      wikilinks: Formats project names as wikilinks.
 --gcallinks         If provided, appends links to create a Google calendar event for the task.
