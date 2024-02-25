@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(description='Things3 database -> Markdown conve
 
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
-parser.add_argument('--format', choices=['import'], help='Format mode. Import: Outputs tasks as headings, notes as body text, subtasks as bullets.')
+parser.add_argument('--format', nargs='+', choices=['import'], help='Format mode. Import: Outputs each tagged task as a note, the the title as a heading, notes as body text, subtasks as bullets.')
 parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
@@ -365,7 +365,7 @@ for row in task_results:
                 completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {taskProjectRaw}\n"
                 taskProject_previous = taskProject
     # task title, project, date
-    if ARG_FORMAT == "import":
+    if 'import' in ARG_FORMAT:
         work_task = f"# {row['title']}\n"
     else:
         work_task = "- "
@@ -427,7 +427,7 @@ if not ARG_SIMPLE:
                 subtask = task_subtasks[row['uuid']] + "\n"
             else:
                 subtask = ""
-            if ARG_FORMAT == "import":
+            if 'import' in ARG_FORMAT:
                 subtask += "- "
             else:
                 subtask += "\t- "
@@ -456,13 +456,13 @@ if completed_work_tasks:
             print(f"{completed_work_tasks[key]}")
             if not ARG_SIMPLE:
                 if key in task_notes:
-                    if ARG_FORMAT == "import":
+                    if 'import' in ARG_FORMAT:
                         print(f"{task_notes[key]}")
                     else:
                         print(f"{indent_string(task_notes[key])}")
                 if key in task_subtasks:
                     print(task_subtasks[key])
-            if ARG_FORMAT == "import":
+            if 'import' in ARG_FORMAT:
                 print("\n---")
     if cancelled_work_tasks:
         if not ARG_SIMPLE:
