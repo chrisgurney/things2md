@@ -230,7 +230,7 @@ def query_tasks(end_time):
 
     if ARG_ORDERBY == "project":
         # FIXED: does sort by name
-        tasks.sort(key=lambda x: x['stop_date'], reverse=True)
+        tasks.sort(key=lambda x: x['stop_date'] if x['stop_date'] is not None else float('-inf'), reverse=True)
         tasks.sort(key=lambda x: x.get("project_title",""))
     elif ARG_ORDERBY == 'index':
         pass
@@ -241,7 +241,7 @@ def query_tasks(end_time):
     elif ARG_TAG:
         pass
     else:
-        tasks.sort(key=lambda x: x['stop_date'], reverse=True)
+        tasks.sort(key=lambda x: x['stop_date'] if x['stop_date'] is not None else float('-inf'), reverse=True)
 
     return tasks[:QUERY_LIMIT]
 
