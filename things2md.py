@@ -365,7 +365,7 @@ for row in task_results:
                 completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {taskProjectRaw}\n"
                 taskProject_previous = taskProject
     # task title, project, date
-    if 'import' in ARG_FORMAT:
+    if ARG_FORMAT is not None and 'import' in ARG_FORMAT:
         work_task = f"# {row['title']}\n"
     else:
         work_task = "- "
@@ -427,7 +427,7 @@ if not ARG_SIMPLE:
                 subtask = task_subtasks[row['uuid']] + "\n"
             else:
                 subtask = ""
-            if 'import' in ARG_FORMAT:
+            if ARG_FORMAT is not None and 'import' in ARG_FORMAT:
                 subtask += "- "
             else:
                 subtask += "\t- "
@@ -456,13 +456,13 @@ if completed_work_tasks:
             print(f"{completed_work_tasks[key]}")
             if not ARG_SIMPLE:
                 if key in task_notes:
-                    if 'import' in ARG_FORMAT:
+                    if ARG_FORMAT is not None and 'import' in ARG_FORMAT:
                         print(f"{task_notes[key]}")
                     else:
                         print(f"{indent_string(task_notes[key])}")
                 if key in task_subtasks:
                     print(task_subtasks[key])
-            if 'import' in ARG_FORMAT:
+            if ARG_FORMAT is not None and 'import' in ARG_FORMAT:
                 print("\n---")
     if cancelled_work_tasks:
         if not ARG_SIMPLE:
