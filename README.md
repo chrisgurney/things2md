@@ -81,7 +81,7 @@ python3 things2md.py --range "1 week ago" --orderby project --simple
 
 ## Listing Todo Tasks
 
-_BETA:_ Show uncompleted tasks in Today.
+Show uncompleted tasks in Today. Note: Evening tasks aren't grouped at the bottom due to things.py lacking support for [the `startBucket` column](https://github.com/chrisgurney/things2md/pull/2#issuecomment-1885672010).
 ```
 python3 things2md.py --today
 ```
