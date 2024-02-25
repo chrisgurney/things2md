@@ -48,7 +48,7 @@ args = parser.parse_args()
 DEBUG = args.debug
 ARG_DATE = args.date
 ARG_DUE = args.due
-ARG_FORMAT = args.format
+ARG_FORMAT = [] if args.format is None else args.format
 ARG_GCAL_LINKS = args.gcallinks
 ARG_GROUPBY = args.groupby
 ARG_ORDERBY = args.orderby
@@ -282,7 +282,7 @@ def format_project_name(project_title):
     Formats the name of the project for output according to provided arguments.
     '''
     output = project_title
-    if ARG_FORMAT is not None:
+    if ARG_FORMAT:
         if 'noemojis' in ARG_FORMAT:
             output = remove_emojis(output)
         if 'wikilinks' in ARG_FORMAT:
@@ -383,7 +383,7 @@ for row in task_results:
                 completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {taskProjectRaw}\n"
                 taskProject_previous = taskProject
     # task title, project, date
-    if ARG_FORMAT is not None and 'import' in ARG_FORMAT:
+    if 'import' in ARG_FORMAT:
         work_task = f"# {row['title']}\n"
     else:
         work_task = "- "
@@ -445,7 +445,7 @@ if not ARG_SIMPLE:
                 subtask = task_subtasks[row['uuid']] + "\n"
             else:
                 subtask = ""
-            if ARG_FORMAT is not None and 'import' in ARG_FORMAT:
+            if 'import' in ARG_FORMAT:
                 subtask += "- "
             else:
                 subtask += "\t- "
@@ -474,13 +474,13 @@ if completed_work_tasks:
             print(f"{completed_work_tasks[key]}")
             if not ARG_SIMPLE:
                 if key in task_notes:
-                    if ARG_FORMAT is not None and 'import' in ARG_FORMAT:
+                    if 'import' in ARG_FORMAT:
                         print(f"{task_notes[key]}")
                     else:
                         print(f"{indent_string(task_notes[key])}")
                 if key in task_subtasks:
                     print(task_subtasks[key])
-            if ARG_FORMAT is not None and 'import' in ARG_FORMAT:
+            if 'import' in ARG_FORMAT:
                 print("\n---")
     if cancelled_work_tasks:
         if not ARG_SIMPLE:
