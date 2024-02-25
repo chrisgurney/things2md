@@ -3,6 +3,7 @@
 # Execute from Obsidian with the shellcommands community plugin.
 
 import argparse
+from argparse import RawTextHelpFormatter
 import os
 import re
 import urllib.parse
@@ -27,11 +28,11 @@ if ENV_SKIP_TAGS:
 # CLI ARGUMENTS
 # #############################################################################
 
-parser = argparse.ArgumentParser(description='Things3 database -> Markdown conversion script.')
+parser = argparse.ArgumentParser(description='Things3 database -> Markdown conversion script.', formatter_class=RawTextHelpFormatter)
 
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
-parser.add_argument('--format', nargs='+', choices=['import'], help='Format mode. Import: Outputs each tagged task as a note, the the title as a heading, notes as body text, subtasks as bullets.')
+parser.add_argument('--format', nargs='+', choices=['import','noemojis','wikilinks'], help='Format modes. Pick one or more of:\n import: Outputs each task tagged with "export" as a formatted note.\n noemojis: Strips emojis.\n wikilinks: Formats project names as wikilinks.')
 parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
@@ -271,6 +272,18 @@ def get_things_link(uuid):
     '''
     return f"[↗]({things.link(uuid)})"
 
+def format_project_name(project_title):
+    '''
+    Formats the name of the project for output according to provided arguments.
+    '''
+    output = project_title
+    if ARG_FORMAT is not None:
+        if 'noemojis' in ARG_FORMAT:
+            output = remove_emojis(output)
+        if 'wikilinks' in ARG_FORMAT:
+            output = f"[[{output}]]"
+    return output
+
 # #############################################################################
 # MAIN
 # #############################################################################
@@ -316,7 +329,7 @@ if DEBUG: print(f"PROJECTS ({len(project_results)}):")
 projects = {}
 for row in project_results:
     if DEBUG: print(dict(row))
-    projects[row['uuid']] = remove_emojis(row['title'])
+    projects[row['uuid']] = format_project_name(row['title'])
 
 #
 # Prepare Tasks
@@ -383,7 +396,7 @@ for row in task_results:
         # if it's a project
         if row['type'] == 'project':
             # link to it in Things
-            work_task += f"{remove_emojis(row['title'])} {get_things_link(row['uuid'])})"
+            work_task += f"{row['title']} {get_things_link(row['uuid'])})"
         else:
             work_task += row['title'].strip()
         # task date
@@ -488,7 +501,7 @@ if ARG_OPROJECTS:
                     continue
                 projectTags = ",".join(p['tags'])
                 projectTags = f" (taglist:: {projectTags})"
-            print(f"- [[{remove_emojis(p['title'])}]] {get_things_link(p['uuid'])}{projectDeadline}{projectTags}")
+            print(f"- {format_project_name(p['title'])} {get_things_link(p['uuid'])}{projectDeadline}{projectTags}")
     for a in area_results:
         if 'tags' in a:
             if has_skip_tags(a['tags']):
@@ -506,6 +519,6 @@ if ARG_OPROJECTS:
                             continue
                         projectTags = ",".join(p['tags'])
                         projectTags = f" (taglist:: {projectTags})"
-                    print(f"- [[{remove_emojis(p['title'])}]] {get_things_link(p['uuid'])}{projectArea}{projectDeadline}{projectTags}")
+                    print(f"- {format_project_name(p['title'])} {get_things_link(p['uuid'])}{projectArea}{projectDeadline}{projectTags}")
 
 if DEBUG: print("\nDONE!")
