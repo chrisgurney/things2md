@@ -15,7 +15,11 @@ Run without any parameters to see the full list of arguments available:
 ```
 --debug             If set will show script debug information.
 --due               If set will show incomplete tasks with deadlines.
---format {import}   Format mode. Import: Outputs tasks as headings, notes as body text, subtasks as bullets.
+--format {import,noemojis,wikilinks} [{import,noemojis,wikilinks} ...]
+                    Format modes. Pick one or more of:
+                     import: Outputs each task tagged with "export" as a formatted note.
+                     noemojis: Strips emojis.
+                     wikilinks: Formats project names as wikilinks.
 --gcallinks         If provided, appends links to create a Google calendar event for the task.
 --groupby {date,project}
                     How to group the tasks
