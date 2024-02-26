@@ -8,6 +8,7 @@ import os
 import re
 import urllib.parse
 from datetime import datetime
+from dateutil import tz
 from dateutil.relativedelta import *
 from dotenv import load_dotenv
 import things
@@ -96,6 +97,8 @@ TODAY_INT = int(TODAY_DATE.strftime('%Y%m%d'))
 TODAY_TIMESTAMP = datetime(TODAY.year, TODAY.month, TODAY.day).timestamp()
 TOMORROW = datetime(TODAY.year, TODAY.month, TODAY.day) + relativedelta(days=1)
 TOMORROW_TIMESTAMP = TOMORROW.timestamp()
+
+LOCAL_TIMEZONE = tz.tzlocal()
 
 # #############################################################################
 # FUNCTIONS
@@ -234,6 +237,34 @@ def query_tasks(end_time):
 
     tasks = things.tasks(**kwargs)
 
+    if ARG_DATE:
+        # get next day's tasks as well, so that we can account for GMT being past midnight local time
+        given_date_obj = datetime.strptime(ARG_DATE, "%Y-%m-%d")
+        next_day_date_obj = given_date_obj + relativedelta(days=1)
+        next_day_date = next_day_date_obj.strftime("%Y-%m-%d")
+
+        kwargs['stop_date'] = f'{next_day_date}'
+        next_day_tasks = things.tasks(**kwargs)
+        tasks = tasks + next_day_tasks
+
+    #
+    # filter based on arguments
+    #
+
+    if ARG_DATE:
+        given_date_local = given_date_obj.astimezone(LOCAL_TIMEZONE)
+        given_date_local_eod = given_date_local.replace(hour=23, minute=59, second=59)
+        for item in tasks[:]:
+            stop_date_local = datetime.strptime(item['stop_date'], "%Y-%m-%d %H:%M:%S").astimezone(LOCAL_TIMEZONE)
+            if stop_date_local > given_date_local and stop_date_local <= given_date_local_eod:
+                pass
+            else:
+                tasks.remove(item)
+
+    #
+    # sort based on arguments
+    #
+   
     if ARG_ORDERBY == "project":
         # FIXED: does sort by name
         tasks.sort(key=lambda x: x['stop_date'] if x['stop_date'] is not None else float('-inf'), reverse=True)
