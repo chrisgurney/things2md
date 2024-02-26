@@ -320,6 +320,21 @@ def format_project_name(project_title):
             output = f"[[{output}]]"
     return output
 
+def format_notes(notes):
+    '''
+    Formats notes by replacing non http links with markdown links.
+    '''
+    non_http_pattern = r'\b((?!http)\w+://\S+)'
+    # Find all non-HTTP URI links in the text
+    non_http_links = re.findall(non_http_pattern, notes)
+    # Replace non-HTTP URI links with markdown format
+    for link in non_http_links:
+        # Extract the scheme from the URI
+        scheme = link.split("://")[0].capitalize()
+        markdown_link = f'[{scheme} Link]({link})'
+        notes = notes.replace(link, markdown_link)
+    return notes
+
 # #############################################################################
 # MAIN
 # #############################################################################
@@ -451,7 +466,7 @@ for row in task_results:
         cancelled_work_tasks[row['uuid']] = work_task
     completed_work_task_ids.append(row['uuid'])
     if row.get('notes'):
-        task_notes[row['uuid']] = row['notes']
+        task_notes[row['uuid']] = format_notes(row['notes'])
         
 if DEBUG:
     print(f"\nTASKS COMPLETED ({len(completed_work_tasks)}):\n{completed_work_tasks}")
