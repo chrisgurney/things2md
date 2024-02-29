@@ -74,6 +74,9 @@ if all(arg is None or arg is False for arg in required_args):
 # GLOBALS
 # #############################################################################
 
+# TODO: move to configuration
+PROJECT_TASK_DIVIDER = ' // '
+
 EMOJI_PATTERN = re.compile("["
                            u"\U0001F600-\U0001F64F"
                            u"\U0001F300-\U0001F5FF"
@@ -428,9 +431,20 @@ for row in task_results:
     # project name
     taskProject = ""
     taskProjectRaw = "No Project"
-    if row.get('project') is not None:
-        taskProjectRaw = projects[row['project']]
-        taskProject = f"{taskProjectRaw} // "
+    if not ARG_PROJECT:
+        if row.get('project') is not None:
+            taskProjectRaw = projects[row['project']]
+            taskProject = f"{taskProjectRaw}{PROJECT_TASK_DIVIDER}"
+        elif row.get('heading') is not None:
+            # if it's not set, this may have a heading, so get the project name from it's UUID instead
+            # TODO: should we store headings for faster lookups?
+            heading_task = things.tasks(uuid=row['heading'])
+            taskProject = format_project_name(heading_task['project_title']) + PROJECT_TASK_DIVIDER
+
+    # heading
+    if 'heading_title' in row:
+        taskProject += f"{row['heading_title']}{PROJECT_TASK_DIVIDER}"
+
     # task date
     work_task_date = ""
     if row.get('stop_date') is not None:
@@ -466,7 +480,7 @@ for row in task_results:
         # if it's a project
         if row['type'] == 'project':
             # link to it in Things
-            work_task += f"{row['title']} {format_things_link(row['uuid'])})"
+            work_task += f"{format_project_name(row['title'])} {format_things_link(row['uuid'])})"
         else:
             work_task += row['title'].strip()
         # task date
