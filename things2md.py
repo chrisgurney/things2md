@@ -6,6 +6,7 @@ import argparse
 from argparse import RawTextHelpFormatter
 import os
 import re
+import sys
 import urllib.parse
 from datetime import datetime
 from dateutil import tz
@@ -302,7 +303,7 @@ def get_gcal_link(task_id, task_title):
     url=f"{url_base}?text={event_text}&dates={GCAL_EVENT_DATES}&details={event_details}"
     return f"[📅]({url})"
 
-def get_things_link(uuid):
+def format_things_link(uuid):
     '''
     Generates URL for the given task in Things.
     '''
@@ -447,7 +448,7 @@ for row in task_results:
         # if it's a project
         if row['type'] == 'project':
             # link to it in Things
-            work_task += f"{row['title']} {get_things_link(row['uuid'])})"
+            work_task += f"{row['title']} {format_things_link(row['uuid'])})"
         else:
             work_task += row['title'].strip()
         # task date
@@ -472,6 +473,9 @@ if DEBUG:
     print(f"\nTASKS COMPLETED ({len(completed_work_tasks)}):\n{completed_work_tasks}")
     print(f"\nCOMPLETED NOTES ({len(task_notes)}):\n{task_notes}")
     print(f"\nSKIPPED TASKS ({len(skipped_tasks)}):\n{skipped_tasks}")
+
+if len(skipped_tasks) > 0:
+    sys.stderr.write(f"things2md.py: Skipped {len(skipped_tasks)} tasks with specified SKIP_TAGS\n")
 
 #
 # Get Subtasks (for completed tasks)
@@ -552,7 +556,7 @@ if ARG_OPROJECTS:
                     continue
                 projectTags = ",".join(p['tags'])
                 projectTags = f" (taglist:: {projectTags})"
-            print(f"- {format_project_name(p['title'])} {get_things_link(p['uuid'])}{projectDeadline}{projectTags}")
+            print(f"- {format_project_name(p['title'])} {format_things_link(p['uuid'])}{projectDeadline}{projectTags}")
     for a in area_results:
         if 'tags' in a:
             if has_skip_tags(a['tags']):
@@ -570,6 +574,6 @@ if ARG_OPROJECTS:
                             continue
                         projectTags = ",".join(p['tags'])
                         projectTags = f" (taglist:: {projectTags})"
-                    print(f"- {format_project_name(p['title'])} {get_things_link(p['uuid'])}{projectArea}{projectDeadline}{projectTags}")
+                    print(f"- {format_project_name(p['title'])} {format_things_link(p['uuid'])}{projectArea}{projectDeadline}{projectTags}")
 
 if DEBUG: print("\nDONE!")
