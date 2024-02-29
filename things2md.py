@@ -221,8 +221,9 @@ def query_tasks(end_time):
 
     if ARG_PROJECT:
         kwargs['project'] = ARG_PROJECT_UUID
-        # note: may be overridden below by another argument that sets scope
-        kwargs['status'] = 'incomplete'
+
+    if ARG_TAG:
+        kwargs['tag'] = ARG_TAG
 
     if end_time is not None:
         kwargs['status'] = None
@@ -233,16 +234,13 @@ def query_tasks(end_time):
     elif ARG_DUE:
         kwargs['deadline'] = True
         kwargs['start_date'] = True
-        kwargs['status'] = 'incomplete'
-    elif ARG_TAG is not None:
-        kwargs['tag'] = ARG_TAG
-        kwargs['status'] = 'incomplete'
-        kwargs['start_date'] = None
-        kwargs['stop_date'] = False
+        kwargs['status'] = 'incomplete' # default, but leaving here for clarity
     elif ARG_TODAY:
         kwargs['start_date'] = True
         kwargs['start'] = 'Anytime'
         kwargs['index'] = 'todayIndex'
+    else:
+        kwargs['status'] = 'incomplete' # default, but leaving here for clarity
 
     if ARG_ORDERBY == "index":
         kwargs['index'] = 'todayIndex'
@@ -251,8 +249,8 @@ def query_tasks(end_time):
 
     tasks = things.tasks(**kwargs)
 
+    # get next day's tasks as well, so that we can account for GMT being past midnight local time
     if ARG_DATE:
-        # get next day's tasks as well, so that we can account for GMT being past midnight local time
         given_date_obj = datetime.strptime(ARG_DATE, "%Y-%m-%d")
         next_day_date_obj = given_date_obj + relativedelta(days=1)
         next_day_date = next_day_date_obj.strftime("%Y-%m-%d")
@@ -265,6 +263,7 @@ def query_tasks(end_time):
     # filter based on arguments
     #
 
+    # return tasks based on the provided date
     if ARG_DATE:
         given_date_local = given_date_obj.astimezone(LOCAL_TIMEZONE)
         given_date_local_eod = given_date_local.replace(hour=23, minute=59, second=59)
