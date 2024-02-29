@@ -34,12 +34,12 @@ parser = argparse.ArgumentParser(description='Things3 database -> Markdown conve
 parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).')
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
-parser.add_argument('--format', nargs='+', choices=['import','noemojis','wikilinks'], help='Format modes. Pick one or more of:\n import: Outputs each task as a formatted note.\n noemojis: Strips emojis.\n wikilinks: Formats project names as wikilinks.')
+parser.add_argument('--format', nargs='+', choices=['note','noemojis','wikilinks'], help='Format modes. Pick one or more of:\n note: Outputs each task as a formatted note.\n noemojis: Strips emojis.\n wikilinks: Formats project names as wikilinks.')
 parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.')
-parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks + notes and cancelled tasks.')
+parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks, notes, and cancelled tasks.')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
 parser.add_argument('--oprojects', default=False, action='store_true', help='If set will show a list of projects, formatted for Obsidian + Dataview.')
@@ -429,7 +429,7 @@ for row in task_results:
                 completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {taskProjectRaw}\n"
                 taskProject_previous = taskProject
     # task title, project, date
-    if 'import' in ARG_FORMAT:
+    if 'note' in ARG_FORMAT:
         work_task = f"# {row['title']}\n"
     else:
         work_task = "- "
@@ -491,7 +491,7 @@ if not ARG_SIMPLE:
                 subtask = task_subtasks[row['uuid']] + "\n"
             else:
                 subtask = ""
-            if 'import' in ARG_FORMAT:
+            if 'note' in ARG_FORMAT:
                 subtask += "- "
             else:
                 subtask += "\t- "
@@ -520,13 +520,13 @@ if completed_work_tasks:
             print(f"{completed_work_tasks[key]}")
             if not ARG_SIMPLE:
                 if key in task_notes:
-                    if 'import' in ARG_FORMAT:
+                    if 'note' in ARG_FORMAT:
                         print(f"{task_notes[key]}")
                     else:
                         print(f"{indent_string(task_notes[key])}")
                 if key in task_subtasks:
                     print(task_subtasks[key])
-            if 'import' in ARG_FORMAT:
+            if 'note' in ARG_FORMAT:
                 print("\n---")
     if cancelled_work_tasks:
         if not ARG_SIMPLE:
