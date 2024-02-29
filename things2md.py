@@ -100,7 +100,7 @@ GCAL_EVENT_DATES = f"{event_start_rfc5545}/{event_finish_rfc5545}"
 
 QUERY_LIMIT = 100
 
-TODAY = datetime.today()
+TODAY = datetime.today().astimezone()
 TODAY_DATE = TODAY.date()
 TODAY_INT = int(TODAY_DATE.strftime('%Y%m%d'))
 TODAY_TIMESTAMP = datetime(TODAY.year, TODAY.month, TODAY.day).timestamp()
@@ -111,50 +111,37 @@ TOMORROW_TIMESTAMP = TOMORROW.timestamp()
 # FUNCTIONS
 # #############################################################################
 
-def get_time_range(date_range):
+def get_datetime_range(date_range):
     '''
-    Returns ISO dates for the given date range, relative to today.
+    Returns dates for the given date range expressed in English, relative to today.
     Supported: today, yesterday, X days ago, X weeks ago, X months ago, X years ago
-    "this week" is also supported, and starts on Monday
+      "this week" is also supported, and starts on Monday
     '''
     splitted = date_range.split()
-    start_time = None
-    end_time = None
     start_date = None
     end_date = None
     if date_range == "this week":
         start_date = TODAY - relativedelta(days=TODAY.weekday())
         end_date = start_date + relativedelta(days=6)
-        start_time = start_date.timestamp()
-        end_time = end_date.timestamp()
     elif len(splitted) == 1 and splitted[0].lower() == 'today':
-        start_time = TODAY.timestamp()
+        start_date = TODAY
     elif len(splitted) == 1 and splitted[0].lower() == 'yesterday':
         start_date = TODAY - relativedelta(days=1)
-        start_time = start_date.timestamp()
     elif splitted[1].lower() in ['day', 'days', 'd']:
         start_date = TODAY - relativedelta(days=int(splitted[0]))
-        start_time = start_date.timestamp()
     elif splitted[1].lower() in ['wk', 'wks', 'week', 'weeks', 'w']:
         start_date = TODAY - relativedelta(weeks=int(splitted[0]))
-        start_time = start_date.timestamp()
     elif splitted[1].lower() in ['mon', 'mons', 'month', 'months', 'm']:
         start_date = TODAY - relativedelta(months=int(splitted[0]))
-        start_time = start_date.timestamp()
     elif splitted[1].lower() in ['yrs', 'yr', 'years', 'year', 'y']:
         start_date = TODAY - relativedelta(years=int(splitted[0]))
-        start_time = start_date.timestamp()
 
-    if start_time:
-        # get the day previous to the one requested, to ensure we get all tasks
-        start_date = datetime.fromtimestamp(float(start_time)) - relativedelta(days=1)
-        start_date = start_date.date().isoformat()
-
-    if end_time:
-        # TODO: return end_date with adjustment
-        # get 11:59:59 of the day requested, to ensure we get all tasks
-        end_date = datetime.fromtimestamp(float(end_time))
-        end_date = end_date.date().isoformat()
+    start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    # set the end date to 11:59:59pm, to ensure we get all tasks
+    if end_date:
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+    else:
+        end_date = TODAY.replace(hour=23, minute=59, second=59, microsecond=999999)
 
     return start_date, end_date
 
@@ -188,7 +175,7 @@ def query_areas():
 
     return areas
 
-def query_projects(end_time):
+def query_projects(stop_datetime):
     '''
     Fetches projects not finished, or finished after the timestamp provided.
     '''
@@ -196,8 +183,13 @@ def query_projects(end_time):
     if DEBUG: kwargs['print_sql'] = True; print("\nPROJECT QUERY:")
 
     projects = things.projects(stop_date=False, **kwargs)
-    if end_time is not None:
-        projects += things.projects(stop_date=f'>{end_time}', **kwargs)
+    if stop_datetime is not None:
+        # FIX: note that this drops the timezone, as Things works off UTC
+        # sounds like this needs to be fixed in Things.py:
+        # https://github.com/chrisgurney/things2md/pull/2#issuecomment-1967535472
+        # ...or not? (similar discussion here:) https://github.com/PyGithub/PyGithub/issues/512
+        stop_date = stop_datetime.strftime("%Y-%m-%d")
+        projects += things.projects(stop_date=f'>{stop_date}', **kwargs)
 
     return projects
 
@@ -209,9 +201,9 @@ def query_subtasks(task_ids):
     if DEBUG: print("\nSUBTASK QUERY:"); kwargs['print_sql'] = True
     return [things.todos(task_id, **kwargs) for task_id in task_ids]
 
-def query_tasks(end_time):
+def query_tasks(stop_datetime):
     '''
-    Fetches tasks completed after the timestamp provided.
+    Fetches tasks completed after the datetime provided.
     '''
     # things.py parameter documention here:
     # https://thingsapi.github.io/things.py/things/api.html#tasks
@@ -223,9 +215,14 @@ def query_tasks(end_time):
     if ARG_TAG:
         kwargs['tag'] = ARG_TAG
 
-    if end_time is not None:
+    if stop_datetime is not None:
         kwargs['status'] = None
-        kwargs['stop_date'] = f'>{end_time}'
+        # FIX: note that this drops the timezone, as Things works off UTC
+        # sounds like this needs to be fixed in Things.py:
+        # https://github.com/chrisgurney/things2md/pull/2#issuecomment-1967535472
+        # ...or not? (similar discussion here:) https://github.com/PyGithub/PyGithub/issues/512
+        stop_date = stop_datetime.strftime("%Y-%m-%d")
+        kwargs['stop_date'] = f'>{stop_date}'
     elif ARG_DATE:
         kwargs['status'] = None
         kwargs['stop_date'] = f'{ARG_DATE}'
@@ -353,14 +350,14 @@ def format_notes(notes):
 
 if DEBUG: print("PARAMS:\n{}".format(args))
 
-start_date = None
-end_date = None
+start_datetime = None
+end_datetime = None
 if ARG_RANGE is not None:
-    start_date, end_date = get_time_range(ARG_RANGE)
-    if start_date == None:
+    start_datetime, end_datetime = get_datetime_range(ARG_RANGE)
+    if start_datetime == None:
         print(f"Error: Invalid date range: {ARG_RANGE}")
         exit()
-    if DEBUG: print(f"\nDATE RANGE:\n\"{ARG_RANGE}\" == {start_date} to {end_date}")
+    if DEBUG: print(f"\nDATE RANGE:\n\"{ARG_RANGE}\" == {start_datetime} to {end_datetime}")
 
 if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_INT}, TODAY_TIMESTAMP: {TODAY_TIMESTAMP}")
 
@@ -375,7 +372,7 @@ if ARG_OPROJECTS:
     for area in area_results:
         areas[area['uuid']] = area['title']
 
-project_results = query_projects(start_date)
+project_results = query_projects(start_datetime)
 
 # format projects:
 # store in associative array for easier reference later
@@ -400,7 +397,7 @@ if ARG_PROJECT and ARG_PROJECT_UUID is None:
 task_results = {}
 # don't need to get tasks if we're just getting the projects list
 if not ARG_OPROJECTS:
-    task_results = query_tasks(start_date)
+    task_results = query_tasks(start_datetime)
 
 #
 # Prepare Tasks
