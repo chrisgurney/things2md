@@ -177,20 +177,20 @@ def query_areas():
 
     return areas
 
-def query_projects(stop_datetime):
+def query_projects(first_datetime):
     '''
-    Fetches projects not finished, or finished after the timestamp provided.
+    Fetches projects not finished, or finished within the range provided.
     '''
     kwargs = dict(status=None)
     if DEBUG: kwargs['print_sql'] = True; print("\nPROJECT QUERY:")
 
     projects = things.projects(stop_date=False, **kwargs)
-    if stop_datetime is not None:
+    if first_datetime is not None:
         # FIX: note that this drops the timezone, as Things works off UTC
         # sounds like this needs to be fixed in Things.py:
         # https://github.com/chrisgurney/things2md/pull/2#issuecomment-1967535472
         # ...or not? (similar discussion here:) https://github.com/PyGithub/PyGithub/issues/512
-        stop_date = stop_datetime.strftime("%Y-%m-%d")
+        stop_date = first_datetime.strftime("%Y-%m-%d")
         projects += things.projects(stop_date=f'>{stop_date}', **kwargs)
 
     return projects
@@ -203,9 +203,9 @@ def query_subtasks(task_ids):
     if DEBUG: print("\nSUBTASK QUERY:"); kwargs['print_sql'] = True
     return [things.todos(task_id, **kwargs) for task_id in task_ids]
 
-def query_tasks(stop_datetime):
+def query_tasks(first_datetime, last_datetime = None):
     '''
-    Fetches tasks completed after the datetime provided.
+    Fetches tasks completed within the range provided.
     '''
     # things.py parameter documention here:
     # https://thingsapi.github.io/things.py/things/api.html#tasks
@@ -217,13 +217,13 @@ def query_tasks(stop_datetime):
     if ARG_TAG:
         kwargs['tag'] = ARG_TAG
 
-    if stop_datetime is not None:
+    if first_datetime is not None:
         kwargs['status'] = None
         # FIX: note that this drops the timezone, as Things works off UTC
         # sounds like this needs to be fixed in Things.py:
         # https://github.com/chrisgurney/things2md/pull/2#issuecomment-1967535472
         # ...or not? (similar discussion here:) https://github.com/PyGithub/PyGithub/issues/512
-        stop_date = stop_datetime.strftime("%Y-%m-%d")
+        stop_date = first_datetime.strftime("%Y-%m-%d")
         kwargs['stop_date'] = f'>{stop_date}'
     elif ARG_DATE:
         kwargs['status'] = None
@@ -246,9 +246,13 @@ def query_tasks(stop_datetime):
 
     tasks = things.tasks(**kwargs)
 
+    # FIX: get tasks for next day if last_datetime is provided as well
     # get next day's tasks as well, so that we can account for GMT being past midnight local time
-    if ARG_DATE:
+    if ARG_DATE: # or last_datetime
+        # if ARG_DATE:
         given_date_obj = datetime.strptime(ARG_DATE, "%Y-%m-%d")
+        # if last_datetime:
+            # given_date_obj = last_datetime
         next_day_date_obj = given_date_obj + relativedelta(days=1)
         next_day_date = next_day_date_obj.strftime("%Y-%m-%d")
 
@@ -264,6 +268,7 @@ def query_tasks(stop_datetime):
     if ARG_DATE:
         given_date_local = given_date_obj.astimezone()
         given_date_local_eod = given_date_local.replace(hour=23, minute=59, second=59)
+        # FIX: do when we have an end date set 
         for item in tasks[:]:
             # FIX: should this instead specify that this is UTC?
             stop_date_local = datetime.strptime(item['stop_date'], "%Y-%m-%d %H:%M:%S").astimezone()
@@ -399,7 +404,7 @@ if ARG_PROJECT and ARG_PROJECT_UUID is None:
 task_results = {}
 # don't need to get tasks if we're just getting the projects list
 if not ARG_OPROJECTS:
-    task_results = query_tasks(start_datetime)
+    task_results = query_tasks(start_datetime, end_datetime)
 
 #
 # Prepare Tasks
