@@ -107,8 +107,6 @@ TODAY_TIMESTAMP = datetime(TODAY.year, TODAY.month, TODAY.day).timestamp()
 TOMORROW = datetime(TODAY.year, TODAY.month, TODAY.day) + relativedelta(days=1)
 TOMORROW_TIMESTAMP = TOMORROW.timestamp()
 
-LOCAL_TIMEZONE = tz.tzlocal()
-
 # #############################################################################
 # FUNCTIONS
 # #############################################################################
@@ -265,10 +263,11 @@ def query_tasks(end_time):
 
     # return tasks based on the provided date
     if ARG_DATE:
-        given_date_local = given_date_obj.astimezone(LOCAL_TIMEZONE)
+        given_date_local = given_date_obj.astimezone()
         given_date_local_eod = given_date_local.replace(hour=23, minute=59, second=59)
         for item in tasks[:]:
-            stop_date_local = datetime.strptime(item['stop_date'], "%Y-%m-%d %H:%M:%S").astimezone(LOCAL_TIMEZONE)
+            # FIX: should this instead specify that this is UTC?
+            stop_date_local = datetime.strptime(item['stop_date'], "%Y-%m-%d %H:%M:%S").astimezone()
             if stop_date_local > given_date_local and stop_date_local <= given_date_local_eod:
                 pass
             else:
