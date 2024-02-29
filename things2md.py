@@ -4,6 +4,7 @@
 
 import argparse
 from argparse import RawTextHelpFormatter
+import errno
 import os
 import re
 import sys
@@ -39,6 +40,7 @@ parser.add_argument('--format', nargs='+', choices=['note','noemojis','wikilinks
 parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
+parser.add_argument('--project', help='If provided, only uncompleted tasks with for this project are fetched.')
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.')
 parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks, notes, and cancelled tasks.')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
@@ -54,16 +56,19 @@ ARG_FORMAT = [] if args.format is None else args.format
 ARG_GCAL_LINKS = args.gcallinks
 ARG_GROUPBY = args.groupby
 ARG_ORDERBY = args.orderby
+ARG_PROJECT = args.project
+ARG_PROJECT_UUID = None # set later if ARG_PROJECT is provided
 ARG_RANGE = args.range
-ARG_SIMPLE = args.simple # TODO: deprecate and fold into 'format' argument
+ARG_SIMPLE = args.simple # TODO: might deprecate and fold into 'format' argument
 ARG_TAG = args.tag
 ARG_TODAY = args.today
 ARG_OPROJECTS = args.oprojects
 
-if ARG_DATE == None and ARG_RANGE == None and ARG_TAG == None and not ARG_TODAY and not ARG_DUE and not ARG_OPROJECTS:
-    print(f"ERROR: The --date, --due, --range, --tag, or --today parameter is required")
+required_args = [ARG_DATE, ARG_DUE, ARG_OPROJECTS, ARG_PROJECT, ARG_RANGE, ARG_TAG, ARG_TODAY]
+if all(arg is None or arg is False for arg in required_args):
+    sys.stderr.write(f"things2md.py: At least one of these arguments are required: date, due, oprojects, project, range, tag, today\n")
     parser.print_help()
-    exit(0)
+    exit(errno.EINVAL) # Invalid argument error code
 
 # #############################################################################
 # GLOBALS
@@ -211,6 +216,11 @@ def query_tasks(end_time):
     # https://thingsapi.github.io/things.py/things/api.html#tasks
     kwargs = dict()
 
+    if ARG_PROJECT:
+        kwargs['project'] = ARG_PROJECT_UUID
+        # note: may be overridden below by another argument that sets scope
+        kwargs['status'] = 'incomplete'
+
     if end_time is not None:
         kwargs['status'] = None
         kwargs['stop_date'] = f'>{end_time}'
@@ -354,15 +364,6 @@ if ARG_RANGE is not None:
 if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_INT}, TODAY_TIMESTAMP: {TODAY_TIMESTAMP}")
 
 #
-# Get Tasks
-#
-
-task_results = {}
-# don't need to get tasks if we're just getting a projects list
-if not ARG_OPROJECTS:
-    task_results = query_tasks(start_date)
-
-#
 # Get Areas + Projects
 #
 
@@ -376,12 +377,29 @@ if ARG_OPROJECTS:
 project_results = query_projects(start_date)
 
 # format projects:
-# store in associative array for easier reference later and strip out project emojis
+# store in associative array for easier reference later
 if DEBUG: print(f"PROJECTS ({len(project_results)}):")
 projects = {}
 for row in project_results:
     if DEBUG: print(dict(row))
-    projects[row['uuid']] = format_project_name(row['title'])
+    formatted_project_name = format_project_name(row['title'])
+    projects[row['uuid']] = formatted_project_name
+    if ARG_PROJECT:
+        if ARG_PROJECT in (row['title'], formatted_project_name):
+            ARG_PROJECT_UUID = row['uuid']
+
+if ARG_PROJECT and ARG_PROJECT_UUID is None:
+    sys.stderr.write(f"things2md.py: Project not found: {ARG_PROJECT}")
+    exit(errno.EINVAL) # Invalid argument error code
+
+#
+# Get Tasks
+#
+
+task_results = {}
+# don't need to get tasks if we're just getting the projects list
+if not ARG_OPROJECTS:
+    task_results = query_tasks(start_date)
 
 #
 # Prepare Tasks

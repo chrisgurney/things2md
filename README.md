@@ -13,28 +13,28 @@ Copy `.env.example` to `.env` and set:
 Run without any parameters to see the full list of arguments available:
 
 ```
---date DATE         Date to get completed tasks for, in ISO format (e.g., 2023-10-07).
---debug             If set will show script debug information.
---due               If set will show incomplete tasks with deadlines.
+--date DATE           Date to get completed tasks for, in ISO format (e.g., 2023-10-07).
+--debug               If set will show script debug information.
+--due                 If set will show incomplete tasks with deadlines.
 --format {note,noemojis,wikilinks} [{note,noemojis,wikilinks} ...]
-                    Format modes. Pick one or more of:
-                     note: Outputs each task as a formatted note.
-                     noemojis: Strips emojis.
-                     wikilinks: Formats project names as wikilinks.
---gcallinks         If provided, appends links to create a Google calendar event for the task.
+                      Format modes. Pick one or more of:
+                        note: Outputs each task as a formatted note.
+                        noemojis: Strips emojis.
+                        wikilinks: Formats project names as wikilinks.
+--gcallinks           If provided, appends links to create a Google calendar event for the task.
 --groupby {date,project}
-                    How to group the tasks
+                      How to group the tasks.
 --orderby {date,index,project}
-                    How to order the tasks
---range RANGE       Relative date range to get completed tasks for (e.g., "0 days ago", "1 day ago", "1 week ago",
-                    "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.
---simple            If set will hide task subtasks, notes, and cancelled tasks.
---tag TAG           If provided, only uncompleted tasks with this tag are fetched.
---today             If set will show incomplete tasks in Today.
---oprojects         If set will show a list of projects, formatted for Obsidian + Dataview.
+                      How to order the tasks.
+--project PROJECT     If provided, only tasks for this project are fetched.
+--range RANGE         Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.
+--simple              If set will hide task subtasks, notes, and cancelled tasks.
+--tag TAG             If provided, only uncompleted tasks with this tag are fetched.
+--today               If set will show incomplete tasks in Today.
+--oprojects           If set will show a list of projects, formatted for Obsidian + Dataview.
 ```
 
-The `--date`, `--due`, `--range`, `--tag`, or `--today` parameter is required, at a minimum.
+At least one of these arguments are required: `date`, `due`, `oprojects`, `project`, `range`, `tag`, `today`
 
 Notes:
 
@@ -85,14 +85,20 @@ Show tasks completed in the last week, ordered by project, but omit subtasks, no
 python3 things2md.py --range "1 week ago" --orderby project --simple
 ```
 
-## Listing Todo Tasks
+## Listing Uncompleted Tasks
 
 Show uncompleted tasks in Today. Note: Evening tasks aren't grouped at the bottom due to things.py lacking support for [the `startBucket` column](https://github.com/chrisgurney/things2md/pull/2#issuecomment-1885672010).
 ```
 python3 things2md.py --today
 ```
 
-_To further narrow down tasks to be done, I tag them with a special tag and retrieve just those tasks:_
+_To further narrow down tasks to be done:_
+
+Show uncompleted tasks for a given project. Project name must match the project name in Things, with one exception: If used in conjunction with `--format noemojis` then you can provide the project name without emojis. Can use in conjunction with other arguments.
+```
+python3 things2md.py --project "🏡 Fix the House"
+python3 things2md.py --project "Fix the House" --format noemojis
+```
 
 Show uncompleted tasks, tagged with "focus", ordered how they're ordered in Things (though Evening tasks seem to show at the top), and show links that you can click to create a Google Calendar event:
 ```
