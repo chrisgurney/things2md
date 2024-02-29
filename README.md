@@ -16,9 +16,9 @@ Run without any parameters to see the full list of arguments available:
 --date DATE         Date to get completed tasks for, in ISO format (e.g., 2023-10-07).
 --debug             If set will show script debug information.
 --due               If set will show incomplete tasks with deadlines.
---format {import,noemojis,wikilinks} [{import,noemojis,wikilinks} ...]
+--format {note,noemojis,wikilinks} [{note,noemojis,wikilinks} ...]
                     Format modes. Pick one or more of:
-                     import: Outputs each task as a formatted note.
+                     note: Outputs each task as a formatted note.
                      noemojis: Strips emojis.
                      wikilinks: Formats project names as wikilinks.
 --gcallinks         If provided, appends links to create a Google calendar event for the task.
@@ -28,13 +28,13 @@ Run without any parameters to see the full list of arguments available:
                     How to order the tasks
 --range RANGE       Relative date range to get completed tasks for (e.g., "0 days ago", "1 day ago", "1 week ago",
                     "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.
---simple            If set will hide task subtasks + notes and cancelled tasks.
+--simple            If set will hide task subtasks, notes, and cancelled tasks.
 --tag TAG           If provided, only uncompleted tasks with this tag are fetched.
 --today             If set will show incomplete tasks in Today.
 --oprojects         If set will show a list of projects, formatted for Obsidian + Dataview.
 ```
 
-The `--due`, `--range`, `--tag`, or `--today` parameter is required, at a minimum.
+The `--date`, `--due`, `--range`, `--tag`, or `--today` parameter is required, at a minimum.
 
 Notes:
 
@@ -104,13 +104,13 @@ Show uncompleted tasks with deadlines set, and those deadline dates, ordered by 
 python3 things2md.py --due
 ```
 
-## Exporting Tasks as Simple Markdown to be Imported (into Obsidian, or another note-taking tool)
+## Exporting Task Contents as Simple Markdown (into Obsidian, or another Markdown tool)
 
-_I frequently draft notes in Things that I just want to get it out as simple markdown._
+_Sometimes my tasks become full notes in Things._
 
-Show uncompleted tasks, tagged with "import", formatted in markdown with task names as headers, notes as body text, and subtasks as a list:
+Show uncompleted tasks, tagged with "note", formatted in markdown with task names as headers, notes as body text, subtasks as a list, with each note separated by `---`:
 ```
-python3 things2md.py --tag "import" --format import --orderby index
+python3 things2md.py --tag "note" --format note --orderby index
 ```
 
 # Usage with Obsidian
@@ -119,10 +119,13 @@ This script was designed for use in [Obsidian](https://obsidian.md/) for Daily N
 
 I call this script via the [shell commands community plugin](https://github.com/Taitava/obsidian-shellcommands). Recommended configuration as follows:
 
-1. Add the command per the above example. Make sure your path to the things2md.py script is absolute.
+1. Add a command per any of the above examples.
+    - Make sure your path to the things2md.py script is absolute (on my system it's at `/opt/homebrew/bin/python3`).
 1. Click the gear icon for each command, and adjust these settings:
-    - In the _General_ tab, set an alias for the command. For example, _tasks_today_ (You'll execute this from a slash command.)
+    - In the _General_ tab, set an alias for the command (e.g., "tasks_today"). You can execute this from a slash command.
     - In the _Output_ tab, under _Output channel for stdout_ set it to _Current file: caret position_
+
+That's it! You can now execute it from a slash command within any note, placing the output wherever your cursor is. Alternately, copy the command's URI (using the link icon under each command) and paste it into a markdown link; clicking that link will execute the command.
 
 # References
 
