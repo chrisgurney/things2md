@@ -389,7 +389,7 @@ for row in project_results:
 
 completed_work_tasks = {}
 cancelled_work_tasks = {}
-skipped_tasks = {}
+skip_tag_tasks = {}
 completed_work_task_ids = []
 task_notes = {}
 
@@ -402,7 +402,7 @@ for row in task_results:
     taskTags = ""
     if 'tags' in row:
         if has_skip_tags(row['tags']):
-            skipped_tasks[row['uuid']] = dict(row)
+            skip_tag_tasks[row['uuid']] = dict(row)
             if DEBUG: print(f"... SKIPPED (TAG): {dict(row)}")
             continue
         taskTags = " #" + " #".join(row['tags'])
@@ -472,10 +472,10 @@ for row in task_results:
 if DEBUG:
     print(f"\nTASKS COMPLETED ({len(completed_work_tasks)}):\n{completed_work_tasks}")
     print(f"\nCOMPLETED NOTES ({len(task_notes)}):\n{task_notes}")
-    print(f"\nSKIPPED TASKS ({len(skipped_tasks)}):\n{skipped_tasks}")
+    print(f"\nSKIPPED TASKS ({len(skip_tag_tasks)}):\n{skip_tag_tasks}")
 
-if len(skipped_tasks) > 0:
-    sys.stderr.write(f"things2md.py: Skipped {len(skipped_tasks)} tasks with specified SKIP_TAGS\n")
+if len(skip_tag_tasks) > 0:
+    sys.stderr.write(f"things2md.py: Skipped {len(skip_tag_tasks)} tasks with specified SKIP_TAGS\n")
 
 #
 # Get Subtasks (for completed tasks)
