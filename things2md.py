@@ -453,7 +453,7 @@ for row in task_results:
         work_task_date = datetime.fromisoformat(row['stop_date']).date()
     # header
     if not ARG_SIMPLE:
-        if ARG_GROUPBY == "date":
+        if ARG_GROUPBY == "date" and not ARG_DATE:
             # date header
             if work_task_date != work_task_date_previous:
                 completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {work_task_date}\n"
