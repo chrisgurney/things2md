@@ -135,6 +135,8 @@ def get_datetime_range(date_range):
         start_date = TODAY - relativedelta(months=int(splitted[0]))
     elif splitted[1].lower() in ['yrs', 'yr', 'years', 'year', 'y']:
         start_date = TODAY - relativedelta(years=int(splitted[0]))
+    else:
+        return None, None
 
     start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
     # set the end date to 11:59:59pm, to ensure we get all tasks
@@ -355,8 +357,8 @@ end_datetime = None
 if ARG_RANGE is not None:
     start_datetime, end_datetime = get_datetime_range(ARG_RANGE)
     if start_datetime == None:
-        print(f"Error: Invalid date range: {ARG_RANGE}")
-        exit()
+        sys.stderr.write(f"things2md.py: Error: Invalid date range: {ARG_RANGE}")
+        exit(errno.EINVAL) # Invalid argument error code
     if DEBUG: print(f"\nDATE RANGE:\n\"{ARG_RANGE}\" == {start_datetime} to {end_datetime}")
 
 if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_INT}, TODAY_TIMESTAMP: {TODAY_TIMESTAMP}")
