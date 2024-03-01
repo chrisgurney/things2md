@@ -30,6 +30,7 @@ Run without any parameters to see the full list of arguments available:
 --range RANGE         Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.
 --simple              If set will hide task subtasks, notes, and cancelled tasks.
 --tag TAG             If provided, only uncompleted tasks with this tag are fetched.
+--tasklinks           If provided, appends a link to the task in Things.
 --today               If set will show incomplete tasks in Today.
 --oprojects           If set will show a list of projects, formatted for Obsidian + Dataview.
 ```
