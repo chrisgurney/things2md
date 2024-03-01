@@ -66,7 +66,7 @@ ARG_OPROJECTS = args.oprojects
 
 required_args = [ARG_DATE, ARG_DUE, ARG_OPROJECTS, ARG_PROJECT, ARG_RANGE, ARG_TAG, ARG_TODAY]
 if all(arg is None or arg is False for arg in required_args):
-    sys.stderr.write(f"things2md.py: At least one of these arguments are required: date, due, oprojects, project, range, tag, today\n")
+    sys.stderr.write(f"things2md: At least one of these arguments are required: date, due, oprojects, project, range, tag, today\n")
     parser.print_help()
     exit(errno.EINVAL) # Invalid argument error code
 
@@ -362,7 +362,7 @@ end_datetime = None
 if ARG_RANGE is not None:
     start_datetime, end_datetime = get_datetime_range(ARG_RANGE)
     if start_datetime == None:
-        sys.stderr.write(f"things2md.py: Error: Invalid date range: {ARG_RANGE}")
+        sys.stderr.write(f"things2md: Error: Invalid date range: {ARG_RANGE}")
         exit(errno.EINVAL) # Invalid argument error code
     if DEBUG: print(f"\nDATE RANGE:\n\"{ARG_RANGE}\" == {start_datetime} to {end_datetime}")
 
@@ -394,7 +394,7 @@ for row in project_results:
             ARG_PROJECT_UUID = row['uuid']
 
 if ARG_PROJECT and ARG_PROJECT_UUID is None:
-    sys.stderr.write(f"things2md.py: Project not found: {ARG_PROJECT}")
+    sys.stderr.write(f"things2md: Project not found: {ARG_PROJECT}")
     exit(errno.EINVAL) # Invalid argument error code
 
 #
@@ -509,7 +509,7 @@ if DEBUG:
     print(f"\nSKIPPED TASKS ({len(skip_tag_tasks)}):\n{skip_tag_tasks}")
 
 if len(skip_tag_tasks) > 0:
-    sys.stderr.write(f"things2md.py: Skipped {len(skip_tag_tasks)} tasks with specified SKIP_TAGS\n")
+    sys.stderr.write(f"things2md: Skipped {len(skip_tag_tasks)} tasks with specified SKIP_TAGS\n")
 
 #
 # Get Subtasks (for completed tasks)
