@@ -423,6 +423,7 @@ taskProject_previous = "TASKPROJECTPREVIOUS"
 
 if DEBUG: print(f"\nTASKS ({len(task_results)}):")
 for row in task_results:
+
     # pre-process tags and skip
     taskTags = ""
     if 'tags' in row:
@@ -432,6 +433,7 @@ for row in task_results:
             continue
         taskTags = " #" + " #".join(row['tags'])
     if DEBUG: print(dict(row))
+
     # project name
     taskProject = ""
     taskProjectRaw = "No Project"
@@ -453,6 +455,7 @@ for row in task_results:
     work_task_date = ""
     if row.get('stop_date') is not None:
         work_task_date = datetime.fromisoformat(row['stop_date']).date()
+
     # header
     if not ARG_SIMPLE:
         if ARG_GROUPBY == "date" and not ARG_DATE:
@@ -465,6 +468,7 @@ for row in task_results:
             if taskProject != taskProject_previous:
                 completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {taskProjectRaw}\n"
                 taskProject_previous = taskProject
+
     # task title, project, date
     if 'note' in ARG_FORMAT:
         work_task = f"# {row['title']}\n"
@@ -499,12 +503,16 @@ for row in task_results:
             work_task += f" {get_gcal_link(row['uuid'], row['title'])}"
         if row.get('deadline'):
             work_task += f" • ⚑ {row['deadline']}"
+
     # task tags
     # work_task += f" • {taskTags}"
     completed_work_tasks[row['uuid']] = work_task
+
     if row['status'] == 'canceled':
         cancelled_work_tasks[row['uuid']] = work_task
+
     completed_work_task_ids.append(row['uuid'])
+
     if row.get('notes'):
         task_notes[row['uuid']] = format_notes(row['notes'])
         
