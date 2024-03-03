@@ -77,7 +77,7 @@ if all(arg is None or arg is False for arg in required_args):
 # #############################################################################
 
 # TODO: move to configuration
-PROJECT_TASK_DIVIDER = ' // '
+PROJECT_TASK_DIVIDER = "//"
 
 EMOJI_PATTERN = re.compile("["
                            u"\U0001F600-\U0001F64F"
@@ -440,16 +440,16 @@ for row in task_results:
     if not ARG_PROJECT:
         if row.get('project') is not None:
             taskProjectRaw = projects[row['project']]
-            taskProject = f"{taskProjectRaw}{PROJECT_TASK_DIVIDER}"
+            taskProject = f"{taskProjectRaw} {PROJECT_TASK_DIVIDER} "
         elif row.get('heading') is not None:
             # if it's not set, this may have a heading, so get the project name from it's UUID instead
             # TODO: should we store headings for faster lookups?
             heading_task = things.tasks(uuid=row['heading'])
-            taskProject = format_project_name(heading_task['project_title']) + PROJECT_TASK_DIVIDER
+            taskProject = format_project_name(heading_task['project_title']) + " " + PROJECT_TASK_DIVIDER + " "
 
     # heading
     if 'heading_title' in row:
-        taskProject += f"{row['heading_title']}{PROJECT_TASK_DIVIDER}"
+        taskProject += f"{row['heading_title']} {PROJECT_TASK_DIVIDER} "
 
     # task date
     work_task_date = ""
@@ -494,6 +494,7 @@ for row in task_results:
         # task link
         if ARG_TASK_LINKS:
             work_task += f" {format_things_link(row['uuid'])}"
+
         # task date
         if work_task_date != "":
             if ARG_GROUPBY != "date" or (ARG_SIMPLE and ARG_RANGE not in ('today', 'yesterday')):
