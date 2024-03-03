@@ -44,7 +44,6 @@ parser.add_argument('--project', help='If provided, only tasks for this project 
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.')
 parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks, notes, and cancelled tasks.')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
-parser.add_argument('--tasklinks', default=False, action='store_true', help='If provided, appends a link to the task in Things.')
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
 parser.add_argument('--oprojects', default=False, action='store_true', help='If set will show a list of projects, formatted for Obsidian + Dataview.')
 
@@ -61,7 +60,6 @@ ARG_PROJECT_UUID = None # set later if ARG_PROJECT is provided
 ARG_RANGE = args.range
 ARG_SIMPLE = args.simple # TODO: might deprecate and fold into 'format' argument
 ARG_TAG = args.tag
-ARG_TASK_LINKS = args.tasklinks
 ARG_TODAY = args.today
 ARG_OPROJECTS = args.oprojects
 
@@ -487,9 +485,6 @@ for row in task_results:
             work_task += f"{format_project_name(row['title'])} [↗]({things.link(row['uuid'])})"
         else:
             work_task += row['title'].strip()
-            # task link
-            if ARG_TASK_LINKS:
-                work_task += f" [↗]({things.link(row['uuid'])})"
 
         # task date
         if work_task_date != "":
