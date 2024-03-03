@@ -77,8 +77,9 @@ if all(arg is None or arg is False for arg in required_args):
 # #############################################################################
 
 # TODO: move to configuration
-PROJECT_TASK_SEPARATOR = "//"
-HEADING_TASK_SEPARATOR = "//"
+PROJECT_SEPARATOR = "//"
+HEADING_SEPARATOR = "//"
+AREA_SEPARATOR = "//"
 DEADLINE_SEPARATOR = "⚑"
 
 EMOJI_PATTERN = re.compile("["
@@ -436,16 +437,16 @@ for row in task_results:
     if not ARG_PROJECT:
         if row.get('project') is not None:
             taskProjectRaw = projects[row['project']]
-            taskProject = f"{taskProjectRaw} {PROJECT_TASK_SEPARATOR} "
+            taskProject = f"{taskProjectRaw} {PROJECT_SEPARATOR} "
         elif row.get('heading') is not None:
             # if it's not set, this may have a heading, so get the project name from it's UUID instead
             # TODO: should we store headings for faster lookups?
             heading_task = things.tasks(uuid=row['heading'])
-            taskProject = format_project_name(heading_task['project_title']) + " " + PROJECT_TASK_SEPARATOR + " "
+            taskProject = format_project_name(heading_task['project_title']) + " " + PROJECT_SEPARATOR + " "
 
     # heading
     if 'heading_title' in row:
-        taskProject += f"{row['heading_title']} {PROJECT_TASK_SEPARATOR} "
+        taskProject += f"{row['heading_title']} {PROJECT_SEPARATOR} "
 
     # task date
     work_task_date = ""
