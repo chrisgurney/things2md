@@ -41,7 +41,7 @@ parser = argparse.ArgumentParser(description='Things3 database -> Markdown conve
 parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).')
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
-parser.add_argument('--format', nargs='+', choices=['note','noemojis','wikilinks'], help='Format modes. Pick one or more of:\n note: Outputs each task as a formatted note.\n noemojis: Strips emojis.\n wikilinks: Formats project names as wikilinks.')
+parser.add_argument('--format', nargs='+', choices=['note','noemojis'], help='Format modes. Pick one or more of:\n note: Outputs each task as a formatted note.\n noemojis: Strips emojis.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--project', help='If provided, only tasks for this project are fetched.')
@@ -326,8 +326,6 @@ def format_project_name(project_title):
     if ARG_FORMAT:
         if 'noemojis' in ARG_FORMAT:
             output = remove_emojis(output)
-        if 'wikilinks' in ARG_FORMAT:
-            output = f"[[{output}]]"
     return output
 
 def format_notes(notes):
