@@ -77,7 +77,9 @@ if all(arg is None or arg is False for arg in required_args):
 # #############################################################################
 
 # TODO: move to configuration
-PROJECT_TASK_DIVIDER = "//"
+PROJECT_TASK_SEPARATOR = "//"
+HEADING_TASK_SEPARATOR = "//"
+DEADLINE_SEPARATOR = "⚑"
 
 EMOJI_PATTERN = re.compile("["
                            u"\U0001F600-\U0001F64F"
@@ -308,12 +310,12 @@ def remove_emojis(input_string):
     cleaned_string = cleaned_string.strip()
     return cleaned_string
 
-def get_gcal_link(task_id, task_title):
+def get_gcal_link(task_id, title):
     '''
     Generates URL for the given task that creates a GCal event, linking back to the task.
     '''
     url_base = "https://calendar.google.com/calendar/u/0/r/eventedit"
-    event_text = urllib.parse.quote_plus(task_title) # encode url
+    event_text = urllib.parse.quote_plus(title) # encode url
     things_url = things.link(task_id)
     event_details = f'<a href="{things_url}">{things_url}</a>'
     event_details = urllib.parse.quote_plus(event_details) # encode url
@@ -440,16 +442,16 @@ for row in task_results:
     if not ARG_PROJECT:
         if row.get('project') is not None:
             taskProjectRaw = projects[row['project']]
-            taskProject = f"{taskProjectRaw} {PROJECT_TASK_DIVIDER} "
+            taskProject = f"{taskProjectRaw} {PROJECT_TASK_SEPARATOR} "
         elif row.get('heading') is not None:
             # if it's not set, this may have a heading, so get the project name from it's UUID instead
             # TODO: should we store headings for faster lookups?
             heading_task = things.tasks(uuid=row['heading'])
-            taskProject = format_project_name(heading_task['project_title']) + " " + PROJECT_TASK_DIVIDER + " "
+            taskProject = format_project_name(heading_task['project_title']) + " " + PROJECT_TASK_SEPARATOR + " "
 
     # heading
     if 'heading_title' in row:
-        taskProject += f"{row['heading_title']} {PROJECT_TASK_DIVIDER} "
+        taskProject += f"{row['heading_title']} {PROJECT_TASK_SEPARATOR} "
 
     # task date
     work_task_date = ""
