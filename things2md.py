@@ -27,6 +27,10 @@ except:
     exit(1)
 
 CONFIG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
+PROJECT_SEPARATOR = CONFIG.get("project_separator", "")
+HEADING_SEPARATOR = CONFIG.get("heading_separator", "")
+AREA_SEPARATOR = CONFIG.get("area_separator", "")
+DEADLINE_SEPARATOR = CONFIG.get("deadline_separator", "")
 
 # #############################################################################
 # CLI ARGUMENTS
@@ -72,12 +76,6 @@ if all(arg is None or arg is False for arg in required_args):
 # #############################################################################
 # GLOBALS
 # #############################################################################
-
-# TODO: move to configuration
-PROJECT_SEPARATOR = "//"
-HEADING_SEPARATOR = "//"
-AREA_SEPARATOR = "//"
-DEADLINE_SEPARATOR = "⚑"
 
 EMOJI_PATTERN = re.compile("["
                            u"\U0001F600-\U0001F64F"
