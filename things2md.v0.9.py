@@ -1,6 +1,7 @@
+# things2md v0.9
 # Things3 Logbook -> Markdown conversion script.
-# For use in Obsidian for Daily Notes.
-# Execute from Obsidian with the shellcommands community plugin.
+# 
+# This is the pre-Things.py version of this script, where I directly queried the Things3 database.
 
 import argparse
 import os
