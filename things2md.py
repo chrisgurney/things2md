@@ -310,7 +310,7 @@ def remove_emojis(input_string):
     cleaned_string = cleaned_string.strip()
     return cleaned_string
 
-def get_gcal_link(task_id, title):
+def get_gcal_url(task_id, title):
     '''
     Generates URL for the given task that creates a GCal event, linking back to the task.
     '''
@@ -320,13 +320,7 @@ def get_gcal_link(task_id, title):
     event_details = f'<a href="{things_url}">{things_url}</a>'
     event_details = urllib.parse.quote_plus(event_details) # encode url
     url=f"{url_base}?text={event_text}&dates={GCAL_EVENT_DATES}&details={event_details}"
-    return f"[📅]({url})"
-
-def format_things_link(uuid):
-    '''
-    Generates URL for the given task in Things.
-    '''
-    return f"[↗]({things.link(uuid)})"
+    return url
 
 def format_project_name(project_title):
     '''
@@ -490,12 +484,12 @@ for row in task_results:
         # if it's a project
         if row['type'] == 'project':
             # link to it in Things
-            work_task += f"{format_project_name(row['title'])} {format_things_link(row['uuid'])}"
+            work_task += f"{format_project_name(row['title'])} [↗]({things.link(row['uuid'])})"
         else:
             work_task += row['title'].strip()
-        # task link
-        if ARG_TASK_LINKS:
-            work_task += f" {format_things_link(row['uuid'])}"
+            # task link
+            if ARG_TASK_LINKS:
+                work_task += f" [↗]({things.link(row['uuid'])})"
 
         # task date
         if work_task_date != "":
@@ -503,7 +497,7 @@ for row in task_results:
                 work_task += f" • {work_task_date}"
         # gcal link
         if ARG_GCAL_LINKS:
-            work_task += f" {get_gcal_link(row['uuid'], row['title'])}"
+            work_task += f" [📅]({get_gcal_url(row['uuid'], row['title'])})"
         if row.get('deadline'):
             work_task += f" • ⚑ {row['deadline']}"
 
@@ -606,7 +600,7 @@ if ARG_OPROJECTS:
                     continue
                 projectTags = ",".join(p['tags'])
                 projectTags = f" (taglist:: {projectTags})"
-            print(f"- {format_project_name(p['title'])} {format_things_link(p['uuid'])}{projectDeadline}{projectTags}")
+            print(f"- {format_project_name(p['title'])} [↗]({things.link(row['uuid'])}){projectDeadline}{projectTags}")
     for a in area_results:
         if 'tags' in a:
             if has_skip_tags(a['tags']):
@@ -624,6 +618,6 @@ if ARG_OPROJECTS:
                             continue
                         projectTags = ",".join(p['tags'])
                         projectTags = f" (taglist:: {projectTags})"
-                    print(f"- {format_project_name(p['title'])} {format_things_link(p['uuid'])}{projectArea}{projectDeadline}{projectTags}")
+                    print(f"- {format_project_name(p['title'])} [↗]({things.link(row['uuid'])}){projectArea}{projectDeadline}{projectTags}")
 
 if DEBUG: print("\nDONE!")
