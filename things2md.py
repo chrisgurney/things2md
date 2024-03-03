@@ -5,27 +5,28 @@
 import argparse
 from argparse import RawTextHelpFormatter
 import errno
-import os
+import json
 import re
 import sys
 import urllib.parse
 from datetime import datetime
-from dateutil import tz
 from dateutil.relativedelta import *
-from dotenv import load_dotenv
 import things
 
 # #############################################################################
 # CONFIGURATION
 # #############################################################################
 
-# get config from .env
-load_dotenv()
+THINGS2MD_CONFIG_FILE = './things2md.json'
 
-# optional
-ENV_SKIP_TAGS = os.getenv("SKIP_TAGS")
-if ENV_SKIP_TAGS:
-    ENV_SKIP_TAGS = ENV_SKIP_TAGS.split(",")
+try:
+    with open(THINGS2MD_CONFIG_FILE, "r") as config_file:
+        CONFIG = json.load(config_file)
+except:
+    sys.stderr.write(f"things2md: Unable to open config file: {THINGS2MD_CONFIG_FILE}\n")
+    exit(1)
+
+CONFIG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
 
 # #############################################################################
 # CLI ARGUMENTS
@@ -157,8 +158,8 @@ def has_skip_tags(tags_to_check):
     Returns True if any of the tags in the list provided is in ENV_SKIP_TAGS.
     '''
     skip = False
-    if ENV_SKIP_TAGS:
-        if any(item in tags_to_check for item in ENV_SKIP_TAGS):
+    if CONFIG_SKIP_TAGS:
+        if any(item in tags_to_check for item in CONFIG_SKIP_TAGS):
             skip = True
     return skip
 
