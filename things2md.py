@@ -38,7 +38,6 @@ parser.add_argument('--date', help='Date to get completed tasks for, in ISO form
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
 parser.add_argument('--format', nargs='+', choices=['note','noemojis','wikilinks'], help='Format modes. Pick one or more of:\n note: Outputs each task as a formatted note.\n noemojis: Strips emojis.\n wikilinks: Formats project names as wikilinks.')
-parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--project', help='If provided, only tasks for this project are fetched.')
@@ -55,7 +54,6 @@ DEBUG = args.debug
 ARG_DATE = args.date
 ARG_DUE = args.due
 ARG_FORMAT = [] if args.format is None else args.format
-ARG_GCAL_LINKS = args.gcallinks
 ARG_GROUPBY = args.groupby
 ARG_ORDERBY = args.orderby
 ARG_PROJECT = args.project
@@ -497,9 +495,6 @@ for row in task_results:
         if work_task_date != "":
             if ARG_GROUPBY != "date" or (ARG_SIMPLE and ARG_RANGE not in ('today', 'yesterday')):
                 work_task += f" • {work_task_date}"
-        # gcal link
-        if ARG_GCAL_LINKS:
-            work_task += f" [📅]({get_gcal_url(row['uuid'], row['title'])})"
         if row.get('deadline'):
             work_task += f" • ⚑ {row['deadline']}"
 
