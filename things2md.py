@@ -86,7 +86,7 @@ if CFG_TEMPLATE == None:
     exit(1)
 
 # validate the template lines are set
-required_template_lines = ["groupby_project", "groupby_date", "project", "task", "notes", "subtasks", "subtask"]
+required_template_lines = ["groupby_project", "groupby_date", "project", "task", "notes", "subtask"]
 if not all(line in CFG_TEMPLATE for line in required_template_lines):
     sys.stderr.write(f"things2md: These template lines are required in {THINGS2MD_CONFIG_FILE} "
                      f"for the selected template '{ARG_TEMPLATE}': {required_template_lines}\n")
@@ -215,14 +215,6 @@ def query_projects(first_datetime):
         projects += things.projects(stop_date=f'>{stop_date}', **kwargs)
 
     return projects
-
-def query_subtasks(task_ids):
-    '''
-    Fetches subtasks given a list of task IDs.
-    '''
-    kwargs = dict(include_items=True)
-    if DEBUG: print("\nSUBTASK QUERY:"); kwargs['print_sql'] = True
-    return [things.todos(task_id, **kwargs) for task_id in task_ids]
 
 def query_tasks(first_datetime, last_datetime = None):
     '''
@@ -430,6 +422,7 @@ cancelled_work_tasks = {}
 skip_tag_tasks = {}
 completed_work_task_ids = []
 task_notes = {}
+task_subtasks = {}
 
 work_task_date_previous = ""
 taskProject_previous = "TASKPROJECTPREVIOUS"
@@ -480,6 +473,19 @@ for task in task_results:
         except KeyError as e:
             sys.stderr.write(f"things2md: Invalid task template variable: '{e.args[0]}'.")
             exit(1)
+
+        # subtasks
+        if CFG_TEMPLATE.get("subtask"):
+            if 'checklist' in task and task['checklist']:
+                # print(task['checklist'])
+                subtasks_md_output = ""
+                for checklist_item in task.get('checklist'):
+                    subtask_vars = {}
+                    subtask_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], CFG_STATUS_SYMBOLS['other'])
+                    subtask_vars['title'] = checklist_item['title']
+                    if subtasks_md_output: subtasks_md_output += "\n"
+                    subtasks_md_output += indent_string(CFG_TEMPLATE.get("subtask").format(**subtask_vars))
+                task_subtasks[task['uuid']] = subtasks_md_output
 
     elif task['type'] == "project":
         vars['area'] = remove_emojis(task['area_title']) if 'area_title' in task else ""
@@ -555,36 +561,6 @@ if DEBUG:
 
 if len(skip_tag_tasks) > 0:
     sys.stderr.write(f"things2md: Skipped {len(skip_tag_tasks)} tasks with specified SKIP_TAGS\n")
-
-#
-# Get Subtasks (for completed tasks)
-# 
-
-tasks_with_subtasks = query_subtasks(completed_work_task_ids)
-tasks_with_subtasks = [todo for todo in tasks_with_subtasks if todo.get('checklist')]
-
-if DEBUG: print(f"TASKS WITH SUBTASKS ({len(tasks_with_subtasks)}):")
-# format subtasks
-task_subtasks = {}
-for row in tasks_with_subtasks:
-    if DEBUG: print(row['uuid'], row.get('title'))
-    for checklist_item in row.get('checklist'):
-        if row['uuid'] in task_subtasks:
-            subtask = task_subtasks[row['uuid']] + "\n"
-        else:
-            subtask = ""
-        if 'note' in ARG_FORMAT:
-            subtask += "- "
-        else:
-            subtask += "\t- "
-            if checklist_item.get('stop_date') is not None:
-                subtask += "[/] "
-            else:
-                subtask += "[ ] "
-        subtask += checklist_item['title']
-        task_subtasks[row['uuid']] = subtask
-
-if DEBUG: print(task_subtasks)
 
 #
 # Write Tasks
