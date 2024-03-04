@@ -86,6 +86,12 @@ if CFG_TEMPLATE == None:
     sys.stderr.write(f"things2md: Unable to find template: {ARG_TEMPLATE}\n")
     exit(1)
 
+# validate the templates are set
+required_template_lines = ["groupby_project", "groupby_date", "project", "task"]
+if not all(line in CFG_TEMPLATE for line in required_template_lines):
+    sys.stderr.write(f"things2md: These template lines are required: {required_template_lines}\n")
+    exit(1)
+
 # #############################################################################
 # GLOBALS
 # #############################################################################
