@@ -88,9 +88,10 @@ if CFG_TEMPLATE == None:
     exit(1)
 
 # validate the template lines are set
-required_template_lines = ["groupby_project", "groupby_date", "project", "task"]
+required_template_lines = ["groupby_project", "groupby_date", "project", "task", "notes"]
 if not all(line in CFG_TEMPLATE for line in required_template_lines):
-    sys.stderr.write(f"things2md: These template lines are required: {required_template_lines}\n")
+    sys.stderr.write(f"things2md: These template lines are required in {THINGS2MD_CONFIG_FILE} "
+                     f"for the selected template '{ARG_TEMPLATE}': {required_template_lines}\n")
     exit(1)
 
 # TODO: for ease-of-use, replace all variables with lower-case, prior to doing substitution
