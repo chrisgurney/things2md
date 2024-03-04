@@ -439,92 +439,115 @@ if DEBUG: print(f"\nTASKS ({len(task_results)}):")
 
 for row in task_results:
 
-    # pre-process tags and skip
-    taskTags = ""
-    if 'tags' in row:
-        if has_skip_tags(row['tags']):
-            skip_tag_tasks[row['uuid']] = dict(row)
-            if DEBUG: print(f"... SKIPPED (TAG): {dict(row)}")
-            continue
-        taskTags = " #" + " #".join(row['tags'])
+    # skip this task if requested
+    if 'tags' in row and has_skip_tags(row['tags']):
+        skip_tag_tasks[row['uuid']] = dict(row)
+        if DEBUG: print(f"... SKIPPED (TAG): {dict(row)}")
+        continue
+    
     if DEBUG: print(dict(row))
 
-    # project name
-    taskProject = ""
-    taskProjectRaw = "No Project"
-    if not ARG_PROJECT:
-        if row.get('project') is not None:
-            taskProjectRaw = projects[row['project']]
-            taskProject = f"{taskProjectRaw} {CFG_PROJECT_SEPARATOR} "
-        elif row.get('heading') is not None:
-            # if it's not set, this may have a heading, so get the project name from it's UUID instead
-            # TODO: should we store headings for faster lookups?
-            heading_task = things.tasks(uuid=row['heading'])
-            taskProject = format_project_name(heading_task['project_title']) + " " + CFG_PROJECT_SEPARATOR + " "
+    #
+    # map Things data to template variables
+    #
 
-    # heading
-    if 'heading_title' in row:
-        taskProject += f"{row['heading_title']} {CFG_PROJECT_SEPARATOR} "
+    vars = {}
+    
+    # these variables apply to both tasks and projects
+    vars['date'] = f"{datetime.fromisoformat(row['stop_date']).date()}" if row['stop_date'] is not None else ""
+    vars['date_sep'] = CFG_DATE_SEPARATOR if vars['date'] else ""
+    vars['deadline'] = row['deadline'] if row['deadline'] is not None else ""
+    vars['deadline_sep'] = CFG_DEADLINE_SEPARATOR if vars['deadline'] else ""
+    vars['gcal_url'] = get_gcal_url(row['uuid'], row['title'])
+    vars['notes'] = format_notes(row['notes']) if row['notes'] else None
+    vars['url'] = things.link(row['uuid'])
+    vars['status'] = CFG_STATUS_SYMBOLS.get(row['status'], CFG_STATUS_SYMBOLS['other'])
+    # TODO: consider other tag list formats (e.g., for frontmatter lists)
+    vars['tags'] = "#" + " #".join(row['tags']) if 'tags' in row else ""
+    vars['title'] = row['title']
+    vars['uuid'] = row['uuid']
 
-    # task date
-    work_task_date = ""
-    if row.get('stop_date') is not None:
-        work_task_date = datetime.fromisoformat(row['stop_date']).date()
+    if row['type'] == "to-do":
+        vars['heading'] = row['heading_title'] if 'heading_title' in row else ""
+        vars['heading_sep'] = CFG_HEADING_SEPARATOR if vars['heading'] else ""
+        vars['project'] = projects[row['project']] if 'project' in row else ""
+        # if this task has a heading, we have to get the project name from the heading's task
+        if not vars['project'] and ('heading' in row) and (heading_task := things.tasks(uuid=row['heading'])):
+            vars['project'] = format_project_name(heading_task['project_title'])
+        vars['project_sep'] = CFG_PROJECT_SEPARATOR if vars['project'] else ""
+        # attempt merge with template
+        try:
+            md_output = CFG_TEMPLATE.get("task").format(**vars)
+        except KeyError as e:
+            sys.stderr.write(f"things2md: Invalid task template variable: '{e.args[0]}'.")
+            exit(1)
 
-    # header
-    if not ARG_SIMPLE:
-        if ARG_GROUPBY == "date" and not ARG_DATE:
-            # date header
-            if work_task_date != work_task_date_previous:
-                completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {work_task_date}\n"
-                work_task_date_previous = work_task_date
-        elif ARG_GROUPBY == "project":
-            # project header
-            if taskProject != taskProject_previous:
-                completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {taskProjectRaw}\n"
-                taskProject_previous = taskProject
+    elif row['type'] == "project":
+        vars['area'] = remove_emojis(row['area_title']) if 'area_title' in row else ""
+        vars['area_sep'] = CFG_AREA_SEPARATOR if vars['area'] else ""
+        vars['title'] = format_project_name(row['title'])
+        # attempt merge with template
+        try: 
+            md_output = CFG_TEMPLATE.get("project").format(**vars)
+        except KeyError as e:
+            sys.stderr.write(f"things2md: Invalid project template variable: '{e.args[0]}'.")
+            exit(1)
 
-    # task title, project, date
-    if 'note' in ARG_FORMAT:
-        work_task = f"# {row['title']}\n"
+    elif row['type'] == "heading":
+        # TODO: do something for --project output
+        pass
+
     else:
-        work_task = "- "
-        if not ARG_SIMPLE:
-            if row['status'] == 'incomplete':
-                work_task += "[ ] "
-            elif row['status'] == 'canceled':
-                work_task += "[x] "
-            else:
-                work_task += "[/] "
-        # task project
-        if ARG_GROUPBY != "project" or ARG_SIMPLE:
-            work_task += f"{taskProject}"
-        # task name
-        # if it's a project
-        if row['type'] == 'project':
-            # link to it in Things
-            work_task += f"{format_project_name(row['title'])} [↗]({things.link(row['uuid'])})"
-        else:
-            work_task += row['title'].strip()
+        # areas?
+        sys.stderr.write(f"things2md: DEBUG: UNHANDLED TYPE: {row['type']}")
 
-        # task date
-        if work_task_date != "":
-            if ARG_GROUPBY != "date" or (ARG_SIMPLE and ARG_RANGE not in ('today', 'yesterday')):
-                work_task += f" • {work_task_date}"
-        if row.get('deadline'):
-            work_task += f" • ⚑ {row['deadline']}"
+    #
+    # prepare groupby headers
+    #
 
-    # task tags
-    # work_task += f" • {taskTags}"
-    completed_work_tasks[row['uuid']] = work_task
+    if ARG_GROUPBY == "date":
+        if vars['date'] != work_task_date_previous:
+            try:
+                completed_work_tasks[row['uuid'] + "-"] = CFG_TEMPLATE.get("groupby_date").format(**vars)
+            except KeyError as e:
+                sys.stderr.write(f"things2md: Invalid groupby_date template variable: '{e.args[0]}'.")
+                exit(1)
+            work_task_date_previous = vars['date']
+    elif ARG_GROUPBY == "project":
+        if 'project' in vars and vars['project'] and vars['project'] != taskProject_previous:
+            try:
+                completed_work_tasks[row['uuid'] + "-"] = CFG_TEMPLATE.get("groupby_project").format(**vars)
+            except KeyError as e:
+                sys.stderr.write(f"things2md: Invalid groupby_project template variable: '{e.args[0]}'.")
+                exit(1)
+            taskProject_previous = vars['project']
 
-    if row['status'] == 'canceled':
-        cancelled_work_tasks[row['uuid']] = work_task
+    #
+    # prepare task + project output
+    #
 
+    md_output = md_output.replace("[[]]", "") # remove empty wikilinks
+    md_output = md_output.strip() # remove spacing around output
+    md_output = re.sub(r'\s+', ' ', md_output) # reduce spaces within output
+
+    #
+    # prepare note output (assuming template is non-empty)
+    #    
+
+    if vars['notes'] and CFG_TEMPLATE.get("notes"):
+        try:
+            task_notes[row['uuid']] = CFG_TEMPLATE.get("notes").format(**vars)
+        except KeyError as e:
+            sys.stderr.write(f"things2md: Invalid notes template variable: '{e.args[0]}'.")
+            exit(1)
+
+    #
+    # store results for output later 
+    #
+
+    completed_work_tasks[row['uuid']] = md_output
+    if row['status'] == 'canceled': cancelled_work_tasks[row['uuid']] = md_output
     completed_work_task_ids.append(row['uuid'])
-
-    if row.get('notes'):
-        task_notes[row['uuid']] = format_notes(row['notes'])
         
 if DEBUG:
     print(f"\nTASKS COMPLETED ({len(completed_work_tasks)}):\n{completed_work_tasks}")
