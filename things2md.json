@@ -15,12 +15,17 @@
             "name": "default",
             "groupby_project": "\n## ☑️ {project}\n",
             "groupby_date": "\n## ☑️ {date}\n",
-            "project": "- {status} {title} {date} {deadline}",
+            "project": "- {status} {title} [↗]({url}) {date} {deadline}",
             "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "notes": "{notes}"
         },
         {
-            "name": "simple"
+            "name": "simple",
+            "groupby_project": "\n## ☑️ {project}\n",
+            "groupby_date": "\n## ☑️ {date}\n",
+            "project": "- {status} {title} [↗]({url}) {date} {deadline}",
+            "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
+            "notes": ""
         }
     ]
 }
