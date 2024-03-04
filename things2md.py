@@ -435,15 +435,15 @@ taskProject_previous = "TASKPROJECTPREVIOUS"
 
 if DEBUG: print(f"\nTASKS ({len(task_results)}):")
 
-for row in task_results:
+for task in task_results:
 
     # skip this task if requested
-    if 'tags' in row and has_skip_tags(row['tags']):
-        skip_tag_tasks[row['uuid']] = dict(row)
-        if DEBUG: print(f"... SKIPPED (TAG): {dict(row)}")
+    if 'tags' in task and has_skip_tags(task['tags']):
+        skip_tag_tasks[task['uuid']] = dict(task)
+        if DEBUG: print(f"... SKIPPED (TAG): {dict(task)}")
         continue
     
-    if DEBUG: print(dict(row))
+    if DEBUG: print(dict(task))
 
     #
     # map Things data to template variables
@@ -452,25 +452,25 @@ for row in task_results:
     vars = {}
     
     # these variables apply to both tasks and projects
-    vars['date'] = f"{datetime.fromisoformat(row['stop_date']).date()}" if row['stop_date'] is not None else ""
+    vars['date'] = f"{datetime.fromisoformat(task['stop_date']).date()}" if task['stop_date'] is not None else ""
     vars['date_sep'] = CFG_DATE_SEPARATOR if vars['date'] else ""
-    vars['deadline'] = row['deadline'] if row['deadline'] is not None else ""
+    vars['deadline'] = task['deadline'] if task['deadline'] is not None else ""
     vars['deadline_sep'] = CFG_DEADLINE_SEPARATOR if vars['deadline'] else ""
-    vars['gcal_url'] = get_gcal_url(row['uuid'], row['title'])
-    vars['notes'] = format_notes(row['notes']) if row['notes'] else None
-    vars['url'] = things.link(row['uuid'])
-    vars['status'] = CFG_STATUS_SYMBOLS.get(row['status'], CFG_STATUS_SYMBOLS['other'])
+    vars['gcal_url'] = get_gcal_url(task['uuid'], task['title'])
+    vars['notes'] = format_notes(task['notes']) if task['notes'] else None
+    vars['url'] = things.link(task['uuid'])
+    vars['status'] = CFG_STATUS_SYMBOLS.get(task['status'], CFG_STATUS_SYMBOLS['other'])
     # TODO: consider other tag list formats (e.g., for frontmatter lists)
-    vars['tags'] = "#" + " #".join(row['tags']) if 'tags' in row else ""
-    vars['title'] = row['title']
-    vars['uuid'] = row['uuid']
+    vars['tags'] = "#" + " #".join(task['tags']) if 'tags' in task else ""
+    vars['title'] = task['title']
+    vars['uuid'] = task['uuid']
 
-    if row['type'] == "to-do":
-        vars['heading'] = row['heading_title'] if 'heading_title' in row else ""
+    if task['type'] == "to-do":
+        vars['heading'] = task['heading_title'] if 'heading_title' in task else ""
         vars['heading_sep'] = CFG_HEADING_SEPARATOR if vars['heading'] else ""
-        vars['project'] = projects[row['project']] if 'project' in row else ""
+        vars['project'] = projects[task['project']] if 'project' in task else ""
         # if this task has a heading, we have to get the project name from the heading's task
-        if not vars['project'] and ('heading' in row) and (heading_task := things.tasks(uuid=row['heading'])):
+        if not vars['project'] and ('heading' in task) and (heading_task := things.tasks(uuid=task['heading'])):
             vars['project'] = format_project_name(heading_task['project_title'])
         vars['project_sep'] = CFG_PROJECT_SEPARATOR if vars['project'] else ""
         # attempt merge with template
@@ -480,10 +480,10 @@ for row in task_results:
             sys.stderr.write(f"things2md: Invalid task template variable: '{e.args[0]}'.")
             exit(1)
 
-    elif row['type'] == "project":
-        vars['area'] = remove_emojis(row['area_title']) if 'area_title' in row else ""
+    elif task['type'] == "project":
+        vars['area'] = remove_emojis(task['area_title']) if 'area_title' in task else ""
         vars['area_sep'] = CFG_AREA_SEPARATOR if vars['area'] else ""
-        vars['title'] = format_project_name(row['title'])
+        vars['title'] = format_project_name(task['title'])
         # attempt merge with template
         try: 
             md_output = CFG_TEMPLATE.get("project").format(**vars)
@@ -491,13 +491,13 @@ for row in task_results:
             sys.stderr.write(f"things2md: Invalid project template variable: '{e.args[0]}'.")
             exit(1)
 
-    elif row['type'] == "heading":
+    elif task['type'] == "heading":
         # TODO: do something for --project output
         pass
 
     else:
         # areas?
-        sys.stderr.write(f"things2md: DEBUG: UNHANDLED TYPE: {row['type']}")
+        sys.stderr.write(f"things2md: DEBUG: UNHANDLED TYPE: {task['type']}")
 
     #
     # prepare groupby headers
@@ -506,7 +506,7 @@ for row in task_results:
     if ARG_GROUPBY == "date":
         if vars['date'] != work_task_date_previous:
             try:
-                completed_work_tasks[row['uuid'] + "-"] = CFG_TEMPLATE.get("groupby_date").format(**vars)
+                completed_work_tasks[task['uuid'] + "-"] = CFG_TEMPLATE.get("groupby_date").format(**vars)
             except KeyError as e:
                 sys.stderr.write(f"things2md: Invalid groupby_date template variable: '{e.args[0]}'.")
                 exit(1)
@@ -514,7 +514,7 @@ for row in task_results:
     elif ARG_GROUPBY == "project":
         if 'project' in vars and vars['project'] and vars['project'] != taskProject_previous:
             try:
-                completed_work_tasks[row['uuid'] + "-"] = CFG_TEMPLATE.get("groupby_project").format(**vars)
+                completed_work_tasks[task['uuid'] + "-"] = CFG_TEMPLATE.get("groupby_project").format(**vars)
             except KeyError as e:
                 sys.stderr.write(f"things2md: Invalid groupby_project template variable: '{e.args[0]}'.")
                 exit(1)
@@ -534,7 +534,7 @@ for row in task_results:
 
     if vars['notes'] and CFG_TEMPLATE.get("notes"):
         try:
-            task_notes[row['uuid']] = CFG_TEMPLATE.get("notes").format(**vars)
+            task_notes[task['uuid']] = CFG_TEMPLATE.get("notes").format(**vars)
         except KeyError as e:
             sys.stderr.write(f"things2md: Invalid notes template variable: '{e.args[0]}'.")
             exit(1)
@@ -543,10 +543,10 @@ for row in task_results:
     # store results for output later 
     #
 
-    completed_work_tasks[row['uuid']] = md_output
-    if row['status'] == 'canceled': cancelled_work_tasks[row['uuid']] = md_output
-    completed_work_task_ids.append(row['uuid'])
-        
+    completed_work_tasks[task['uuid']] = md_output
+    if task['status'] == 'canceled': cancelled_work_tasks[task['uuid']] = md_output
+    completed_work_task_ids.append(task['uuid'])
+
 if DEBUG:
     print(f"\nTASKS COMPLETED ({len(completed_work_tasks)}):\n{completed_work_tasks}")
     print(f"\nCOMPLETED NOTES ({len(task_notes)}):\n{task_notes}")
