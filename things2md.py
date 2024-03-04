@@ -76,6 +76,26 @@ if all(arg is None or arg is False for arg in required_args):
     parser.print_help()
     exit(errno.EINVAL) # Invalid argument error code
 
+# #############################################################################
+# CONFIGURATION
+# #############################################################################
+
+THINGS2MD_CONFIG_FILE = './things2md.json'
+
+try:
+    with open(THINGS2MD_CONFIG_FILE, "r") as config_file:
+        CONFIG = json.load(config_file)
+except:
+    sys.stderr.write(f"things2md: Unable to open config file: {THINGS2MD_CONFIG_FILE}\n")
+    exit(1)
+
+CFG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
+CFG_PROJECT_SEPARATOR = CONFIG.get("project_sep", "")
+CFG_HEADING_SEPARATOR = CONFIG.get("heading_sep", "")
+CFG_AREA_SEPARATOR = CONFIG.get("area_sep", "")
+CFG_DEADLINE_SEPARATOR = CONFIG.get("deadline_sep", "")
+CFG_STATUS_SYMBOLS = CONFIG.get("status_symbols", "")
+
 CFG_TEMPLATES = CONFIG.get("templates", [])
 CFG_TEMPLATE = None
 for template in CFG_TEMPLATES:
