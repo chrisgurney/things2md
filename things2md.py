@@ -399,13 +399,13 @@ project_results = query_projects(start_datetime)
 # store in associative array for easier reference later
 if DEBUG: print(f"PROJECTS ({len(project_results)}):")
 projects = {}
-for row in project_results:
-    if DEBUG: print(dict(row))
-    formatted_project_name = format_project_name(row['title'])
-    projects[row['uuid']] = formatted_project_name
+for project in project_results:
+    if DEBUG: print(dict(project))
+    formatted_project_name = format_project_name(project['title'])
+    projects[project['uuid']] = formatted_project_name
     if ARG_PROJECT:
-        if ARG_PROJECT in (row['title'], formatted_project_name):
-            ARG_PROJECT_UUID = row['uuid']
+        if ARG_PROJECT in (project['title'], formatted_project_name):
+            ARG_PROJECT_UUID = project['uuid']
 
 if ARG_PROJECT and ARG_PROJECT_UUID is None:
     sys.stderr.write(f"things2md: Project not found: {ARG_PROJECT}")
