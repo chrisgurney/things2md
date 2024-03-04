@@ -17,7 +17,8 @@
             "groupby_date": "\n## ☑️ {date}\n",
             "project": "- {status} {title} [↗]({url}) {date} {deadline}",
             "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
-            "notes": "{notes}"
+            "notes": "{notes}",
+            "subtask": "- {status} {title}"
         },
         {
             "name": "simple",
@@ -25,7 +26,8 @@
             "groupby_date": "\n## ☑️ {date}\n",
             "project": "- {status} {title} [↗]({url}) {date} {deadline}",
             "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
-            "notes": ""
+            "notes": "",
+            "subtask": ""
         }
     ]
 }
