@@ -41,7 +41,7 @@ parser = argparse.ArgumentParser(description='Things3 database -> Markdown conve
 parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).')
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
-parser.add_argument('--format', nargs='+', choices=['note','noemojis'], help='Format modes. Pick one or more of:\n note: Outputs each task as a formatted note.\n noemojis: Strips emojis.')
+parser.add_argument('--format', default=[], nargs='+', choices=['note','noemojis'], help='Format modes. Pick one or more of:\n note: Outputs each task as a formatted note.\n noemojis: Strips emojis.')
 parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--project', help='If provided, only tasks for this project are fetched.')
@@ -56,7 +56,7 @@ args = parser.parse_args()
 DEBUG = args.debug
 ARG_DATE = args.date
 ARG_DUE = args.due
-ARG_FORMAT = [] if args.format is None else args.format
+ARG_FORMAT = args.format
 ARG_GROUPBY = args.groupby
 ARG_ORDERBY = args.orderby
 ARG_PROJECT = args.project
