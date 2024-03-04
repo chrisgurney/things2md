@@ -27,11 +27,11 @@ parser.add_argument('--format', default=[], nargs='+', choices=['note','noemojis
 parser.add_argument('--groupby', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--project', help='If provided, only tasks for this project are fetched.')
+parser.add_argument('--projects', default=False, action='store_true', help='If set will show a list of projects only.')
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
 parser.add_argument('--template', default='default', help='Name of the template to use from the configuration.')
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
-parser.add_argument('--oprojects', default=False, action='store_true', help='If set will show a list of projects, formatted for Obsidian + Dataview.')
 
 args = parser.parse_args()
 
@@ -42,16 +42,16 @@ ARG_FORMAT = args.format
 ARG_GROUPBY = args.groupby
 ARG_ORDERBY = args.orderby
 ARG_PROJECT = args.project
+ARG_PROJECTS = args.projects
 ARG_PROJECT_UUID = None # set later if ARG_PROJECT is provided
 ARG_RANGE = args.range
 ARG_TAG = args.tag
 ARG_TEMPLATE = args.template
 ARG_TODAY = args.today
-ARG_OPROJECTS = args.oprojects
 
-required_args = [ARG_DATE, ARG_DUE, ARG_OPROJECTS, ARG_PROJECT, ARG_RANGE, ARG_TAG, ARG_TODAY]
+required_args = [ARG_DATE, ARG_DUE, ARG_PROJECTS, ARG_PROJECT, ARG_RANGE, ARG_TAG, ARG_TODAY]
 if all(arg is None or arg is False for arg in required_args):
-    sys.stderr.write(f"things2md: At least one of these arguments are required: date, due, oprojects, project, range, tag, today\n")
+    sys.stderr.write(f"things2md: At least one of these arguments are required: date, due, project, projects, range, tag, today\n")
     parser.print_help()
     exit(errno.EINVAL) # Invalid argument error code
 
@@ -382,17 +382,15 @@ if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_
 
 # get area names
 areas = dict()
-if ARG_OPROJECTS:
-    area_results = query_areas()
-    for area in area_results:
-        areas[area['uuid']] = area['title']
+area_results = query_areas()
+for area in area_results:
+    areas[area['uuid']] = area
 
+projects = {}
 project_results = query_projects(start_datetime)
-
 # format projects:
 # store in associative array for easier reference later
 if DEBUG: print(f"PROJECTS ({len(project_results)}):")
-projects = {}
 for project in project_results:
     if DEBUG: print(dict(project))
     formatted_project_name = format_project_name(project['title'])
@@ -411,8 +409,10 @@ if ARG_PROJECT and ARG_PROJECT_UUID is None:
 
 task_results = {}
 # don't need to get tasks if we're just getting the projects list
-if not ARG_OPROJECTS:
+if not ARG_PROJECTS:
     task_results = query_tasks(start_datetime, end_datetime)
+else:
+    task_results = project_results
 
 #
 # Prepare Tasks
@@ -437,7 +437,7 @@ for task in task_results:
         skip_tag_tasks[task['uuid']] = dict(task)
         if DEBUG: print(f"... SKIPPED (TAG): {dict(task)}")
         continue
-    
+
     if DEBUG: print(dict(task))
 
     #
@@ -489,6 +489,12 @@ for task in task_results:
                 task_subtasks[task['uuid']] = subtasks_md_output
 
     elif task['type'] == "project":
+        # skip if project's area has SKIP_TAGS
+        if 'area' in task:
+            if has_skip_tags(areas[task['area']].get('tags', [])):
+                skip_tag_tasks[task['uuid']] = dict(task)
+                if DEBUG: print(f"... SKIPPED (AREA TAG): {dict(task)}")
+                continue
         vars['area'] = remove_emojis(task['area_title']) if 'area_title' in task else ""
         vars['area_sep'] = CFG_AREA_SEPARATOR if vars['area'] else ""
         vars['title'] = format_project_name(task['title'])
@@ -555,13 +561,17 @@ for task in task_results:
     if task['status'] == 'canceled': cancelled_work_tasks[task['uuid']] = md_output
     completed_work_task_ids.append(task['uuid'])
 
+#
+# Summary
+# 
+
 if DEBUG:
     print(f"\nTASKS COMPLETED ({len(completed_work_tasks)}):\n{completed_work_tasks}")
     print(f"\nCOMPLETED NOTES ({len(task_notes)}):\n{task_notes}")
     print(f"\nSKIPPED TASKS ({len(skip_tag_tasks)}):\n{skip_tag_tasks}")
 
 if len(skip_tag_tasks) > 0:
-    sys.stderr.write(f"things2md: Skipped {len(skip_tag_tasks)} tasks with specified SKIP_TAGS\n")
+    sys.stderr.write(f"things2md: Skipped {len(skip_tag_tasks)} tasks or projects with specified SKIP_TAGS\n")
 
 #
 # Write Tasks
@@ -594,39 +604,5 @@ if completed_work_tasks:
                 print(f"{indent_string(task_notes[key])}")
             if key in task_subtasks:
                 print(task_subtasks[key])
-
-# format a list of projects as a list with inline attributes for Obsidian, grouped by area
-if ARG_OPROJECTS:
-    # TODO: refactor repeated code here
-    for p in project_results:
-        if 'area' not in p:
-            projectDeadline = ""
-            projectTags = ""
-            if p['deadline']:
-                projectDeadline = f" (deadline:: ⚑ {p['deadline']})"
-            if 'tags' in p:
-                if has_skip_tags(p['tags']):
-                    continue
-                projectTags = ",".join(p['tags'])
-                projectTags = f" (taglist:: {projectTags})"
-            print(f"- {format_project_name(p['title'])} [↗]({things.link(p['uuid'])}){projectDeadline}{projectTags}")
-    for a in area_results:
-        if 'tags' in a:
-            if has_skip_tags(a['tags']):
-                continue  
-        for p in project_results:
-            if 'area' in p:
-                if p['area'] == a['uuid']:
-                    projectArea = f" (area:: {remove_emojis(p['area_title'])})"
-                    projectDeadline = ""
-                    projectTags = ""
-                    if p['deadline']:
-                        projectDeadline = f" (deadline:: ⚑ {p['deadline']})"
-                    if 'tags' in p:
-                        if has_skip_tags(p['tags']):
-                            continue
-                        projectTags = ",".join(p['tags'])
-                        projectTags = f" (taglist:: {projectTags})"
-                    print(f"- {format_project_name(p['title'])} [↗]({things.link(p['uuid'])}){projectArea}{projectDeadline}{projectTags}")
 
 if DEBUG: print("\nDONE!")
