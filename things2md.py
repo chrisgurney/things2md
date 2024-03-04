@@ -631,7 +631,7 @@ if ARG_OPROJECTS:
                     continue
                 projectTags = ",".join(p['tags'])
                 projectTags = f" (taglist:: {projectTags})"
-            print(f"- {format_project_name(p['title'])} [↗]({things.link(row['uuid'])}){projectDeadline}{projectTags}")
+            print(f"- {format_project_name(p['title'])} [↗]({things.link(p['uuid'])}){projectDeadline}{projectTags}")
     for a in area_results:
         if 'tags' in a:
             if has_skip_tags(a['tags']):
@@ -649,6 +649,6 @@ if ARG_OPROJECTS:
                             continue
                         projectTags = ",".join(p['tags'])
                         projectTags = f" (taglist:: {projectTags})"
-                    print(f"- {format_project_name(p['title'])} [↗]({things.link(row['uuid'])}){projectArea}{projectDeadline}{projectTags}")
+                    print(f"- {format_project_name(p['title'])} [↗]({things.link(p['uuid'])}){projectArea}{projectDeadline}{projectTags}")
 
 if DEBUG: print("\nDONE!")
