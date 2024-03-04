@@ -74,7 +74,7 @@ CFG_DEADLINE_SEPARATOR = CONFIG.get("deadline_sep", "")
 CFG_HEADING_SEPARATOR = CONFIG.get("heading_sep", "")
 CFG_PROJECT_SEPARATOR = CONFIG.get("project_sep", "")
 CFG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
-CFG_STATUS_SYMBOLS = CONFIG.get("status_symbols", "")
+CFG_STATUS_SYMBOLS = CONFIG.get("status_symbols", {})
 
 CFG_TEMPLATES = CONFIG.get("templates", [])
 CFG_TEMPLATE = None
