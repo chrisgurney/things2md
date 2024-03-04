@@ -27,7 +27,6 @@ parser.add_argument('--groupby', choices=['date','project'], help='How to group 
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--project', help='If provided, only tasks for this project are fetched.')
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.')
-parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks, notes, and cancelled tasks.')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
 parser.add_argument('--template', default='default', help='Name of the template to use from the configuration.')
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
@@ -44,7 +43,6 @@ ARG_ORDERBY = args.orderby
 ARG_PROJECT = args.project
 ARG_PROJECT_UUID = None # set later if ARG_PROJECT is provided
 ARG_RANGE = args.range
-ARG_SIMPLE = args.simple # TODO: might deprecate and fold into 'format' argument
 ARG_TAG = args.tag
 ARG_TEMPLATE = args.template
 ARG_TODAY = args.today
@@ -561,32 +559,31 @@ if len(skip_tag_tasks) > 0:
 # Get Subtasks (for completed tasks)
 # 
 
-if not ARG_SIMPLE:
-    tasks_with_subtasks = query_subtasks(completed_work_task_ids)
-    tasks_with_subtasks = [todo for todo in tasks_with_subtasks if todo.get('checklist')]
+tasks_with_subtasks = query_subtasks(completed_work_task_ids)
+tasks_with_subtasks = [todo for todo in tasks_with_subtasks if todo.get('checklist')]
 
-    if DEBUG: print(f"TASKS WITH SUBTASKS ({len(tasks_with_subtasks)}):")
-    # format subtasks
-    task_subtasks = {}
-    for row in tasks_with_subtasks:
-        if DEBUG: print(row['uuid'], row.get('title'))
-        for checklist_item in row.get('checklist'):
-            if row['uuid'] in task_subtasks:
-                subtask = task_subtasks[row['uuid']] + "\n"
+if DEBUG: print(f"TASKS WITH SUBTASKS ({len(tasks_with_subtasks)}):")
+# format subtasks
+task_subtasks = {}
+for row in tasks_with_subtasks:
+    if DEBUG: print(row['uuid'], row.get('title'))
+    for checklist_item in row.get('checklist'):
+        if row['uuid'] in task_subtasks:
+            subtask = task_subtasks[row['uuid']] + "\n"
+        else:
+            subtask = ""
+        if 'note' in ARG_FORMAT:
+            subtask += "- "
+        else:
+            subtask += "\t- "
+            if checklist_item.get('stop_date') is not None:
+                subtask += "[/] "
             else:
-                subtask = ""
-            if 'note' in ARG_FORMAT:
-                subtask += "- "
-            else:
-                subtask += "\t- "
-                if checklist_item.get('stop_date') is not None:
-                    subtask += "[/] "
-                else:
-                    subtask += "[ ] "
-            subtask += checklist_item['title']
-            task_subtasks[row['uuid']] = subtask
+                subtask += "[ ] "
+        subtask += checklist_item['title']
+        task_subtasks[row['uuid']] = subtask
 
-    if DEBUG: print(task_subtasks)
+if DEBUG: print(task_subtasks)
 
 #
 # Write Tasks
@@ -602,25 +599,23 @@ if completed_work_tasks:
         # if DEBUG: print(completed_work_tasks[key])
         if key not in cancelled_work_tasks:
             print(f"{completed_work_tasks[key]}")
-            if not ARG_SIMPLE:
-                if key in task_notes:
-                    if 'note' in ARG_FORMAT:
-                        print(f"{task_notes[key]}")
-                    else:
-                        print(f"{indent_string(task_notes[key])}")
-                if key in task_subtasks:
-                    print(task_subtasks[key])
+            if key in task_notes:
+                if 'note' in ARG_FORMAT:
+                    print(f"{task_notes[key]}")
+                else:
+                    print(f"{indent_string(task_notes[key])}")
+            if key in task_subtasks:
+                print(task_subtasks[key])
             if 'note' in ARG_FORMAT:
                 print("\n---")
     if cancelled_work_tasks:
-        if not ARG_SIMPLE:
-            print("\n## 🅇 Cancelled\n")
-            for key in cancelled_work_tasks:
-                print(f"{cancelled_work_tasks[key]}")
-                if key in task_notes:
-                    print(f"{indent_string(task_notes[key])}")
-                if key in task_subtasks:
-                    print(task_subtasks[key])
+        print("\n## 🅇 Cancelled\n")
+        for key in cancelled_work_tasks:
+            print(f"{cancelled_work_tasks[key]}")
+            if key in task_notes:
+                print(f"{indent_string(task_notes[key])}")
+            if key in task_subtasks:
+                print(task_subtasks[key])
 
 # format a list of projects as a list with inline attributes for Obsidian, grouped by area
 if ARG_OPROJECTS:
