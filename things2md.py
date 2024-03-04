@@ -355,6 +355,7 @@ def format_notes(notes):
     '''
     Formats notes by replacing non http links with markdown links.
     '''
+    if notes:
         non_http_pattern = r'\b((?!http)\w+://\S+)'
         # Find all non-HTTP URI links in the text
         non_http_links = re.findall(non_http_pattern, notes)
