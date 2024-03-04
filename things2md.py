@@ -230,7 +230,8 @@ def query_tasks(first_datetime, last_datetime = None):
     '''
     # things.py parameter documention here:
     # https://thingsapi.github.io/things.py/things/api.html#tasks
-    kwargs = dict()
+
+    kwargs = dict(include_items=True)
 
     if ARG_PROJECT:
         kwargs['project'] = ARG_PROJECT_UUID
