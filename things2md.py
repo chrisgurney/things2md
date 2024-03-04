@@ -69,11 +69,12 @@ except:
     sys.stderr.write(f"things2md: Unable to open config file: {THINGS2MD_CONFIG_FILE}\n")
     exit(1)
 
-CFG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
-CFG_PROJECT_SEPARATOR = CONFIG.get("project_sep", "")
-CFG_HEADING_SEPARATOR = CONFIG.get("heading_sep", "")
 CFG_AREA_SEPARATOR = CONFIG.get("area_sep", "")
+CFG_DATE_SEPARATOR = CONFIG.get("date_sep", "")
 CFG_DEADLINE_SEPARATOR = CONFIG.get("deadline_sep", "")
+CFG_HEADING_SEPARATOR = CONFIG.get("heading_sep", "")
+CFG_PROJECT_SEPARATOR = CONFIG.get("project_sep", "")
+CFG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
 CFG_STATUS_SYMBOLS = CONFIG.get("status_symbols", "")
 
 CFG_TEMPLATES = CONFIG.get("templates", [])
@@ -86,12 +87,14 @@ if CFG_TEMPLATE == None:
     sys.stderr.write(f"things2md: Unable to find template: {ARG_TEMPLATE}\n")
     exit(1)
 
-# validate the templates are set
+# validate the template lines are set
 required_template_lines = ["groupby_project", "groupby_date", "project", "task"]
 if not all(line in CFG_TEMPLATE for line in required_template_lines):
     sys.stderr.write(f"things2md: These template lines are required: {required_template_lines}\n")
     exit(1)
 
+# TODO: for ease-of-use, replace all variables with lower-case, prior to doing substitution
+    
 # #############################################################################
 # GLOBALS
 # #############################################################################
@@ -431,6 +434,7 @@ work_task_date_previous = ""
 taskProject_previous = "TASKPROJECTPREVIOUS"
 
 if DEBUG: print(f"\nTASKS ({len(task_results)}):")
+
 for row in task_results:
 
     # pre-process tags and skip

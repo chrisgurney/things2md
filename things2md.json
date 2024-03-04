@@ -1,9 +1,10 @@
 {
-    "skip_tags": "personal,pers,ignore",
-    "project_sep": "//",
-    "heading_sep": "//",
     "area_sep": "//",
+    "date_sep": "•",
     "deadline_sep": "⚑",
+    "heading_sep": "//",
+    "project_sep": "//",
+    "skip_tags": "personal,pers,ignore",
     "status_symbols": {
         "incomplete": "[ ]",
         "canceled": "[x]",
