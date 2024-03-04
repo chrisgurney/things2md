@@ -585,24 +585,15 @@ if completed_work_tasks:
     
     for key in completed_work_tasks:
         # if DEBUG: print(completed_work_tasks[key])
-        if key not in cancelled_work_tasks:
-            print(f"{completed_work_tasks[key]}")
-            if key in task_notes:
-                if 'note' in ARG_FORMAT:
-                    print(f"{task_notes[key]}")
-                else:
-                    print(f"{indent_string(task_notes[key])}")
-            if key in task_subtasks:
-                print(task_subtasks[key])
+        print(f"{completed_work_tasks[key]}")
+        if key in task_notes:
             if 'note' in ARG_FORMAT:
-                print("\n---")
-    if cancelled_work_tasks:
-        print("\n## 🅇 Cancelled\n")
-        for key in cancelled_work_tasks:
-            print(f"{cancelled_work_tasks[key]}")
-            if key in task_notes:
+                print(f"{task_notes[key]}")
+            else:
                 print(f"{indent_string(task_notes[key])}")
-            if key in task_subtasks:
-                print(task_subtasks[key])
+        if key in task_subtasks:
+            print(task_subtasks[key])
+        if 'note' in ARG_FORMAT:
+            print("\n---")
 
 if DEBUG: print("\nDONE!")
