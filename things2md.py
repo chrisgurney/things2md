@@ -6,6 +6,7 @@ import argparse
 from argparse import RawTextHelpFormatter
 import errno
 import json
+import os
 import re
 import sys
 import urllib.parse
@@ -59,9 +60,9 @@ if all(arg is None or arg is False for arg in required_args):
 # #############################################################################
 
 THINGS2MD_CONFIG_FILE = './things2md.json'
-
+config_file_path = os.path.join(os.path.dirname(__file__), THINGS2MD_CONFIG_FILE)
 try:
-    with open(THINGS2MD_CONFIG_FILE, "r") as config_file:
+    with open(config_file_path, "r") as config_file:
         CONFIG = json.load(config_file)
 except:
     sys.stderr.write(f"things2md: Unable to open config file: {THINGS2MD_CONFIG_FILE}\n")
