@@ -31,6 +31,7 @@ CFG_PROJECT_SEPARATOR = CONFIG.get("project_sep", "")
 CFG_HEADING_SEPARATOR = CONFIG.get("heading_sep", "")
 CFG_AREA_SEPARATOR = CONFIG.get("area_sep", "")
 CFG_DEADLINE_SEPARATOR = CONFIG.get("deadline_sep", "")
+CFG_STATUS_SYMBOLS = CONFIG.get("status_symbols", "")
 
 # #############################################################################
 # CLI ARGUMENTS

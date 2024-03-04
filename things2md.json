@@ -3,5 +3,10 @@
     "project_sep": "//",
     "heading_sep": "//",
     "area_sep": "//",
-    "deadline_sep": "⚑"
+    "deadline_sep": "⚑",
+    "status_symbols": {
+        "incomplete": "[ ]",
+        "canceled": "[x]",
+        "other": "[/]"
+    }
 }
