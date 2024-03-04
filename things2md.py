@@ -49,6 +49,7 @@ parser.add_argument('--project', help='If provided, only tasks for this project 
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.')
 parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks, notes, and cancelled tasks.')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
+parser.add_argument('--template', default='default', help='Name of the template to use from the configuration.')
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
 parser.add_argument('--oprojects', default=False, action='store_true', help='If set will show a list of projects, formatted for Obsidian + Dataview.')
 
@@ -65,6 +66,7 @@ ARG_PROJECT_UUID = None # set later if ARG_PROJECT is provided
 ARG_RANGE = args.range
 ARG_SIMPLE = args.simple # TODO: might deprecate and fold into 'format' argument
 ARG_TAG = args.tag
+ARG_TEMPLATE = args.template
 ARG_TODAY = args.today
 ARG_OPROJECTS = args.oprojects
 
@@ -73,6 +75,16 @@ if all(arg is None or arg is False for arg in required_args):
     sys.stderr.write(f"things2md: At least one of these arguments are required: date, due, oprojects, project, range, tag, today\n")
     parser.print_help()
     exit(errno.EINVAL) # Invalid argument error code
+
+CFG_TEMPLATES = CONFIG.get("templates", [])
+CFG_TEMPLATE = None
+for template in CFG_TEMPLATES:
+    if template.get("name") == ARG_TEMPLATE:
+        CFG_TEMPLATE = template
+        break
+if CFG_TEMPLATE == None:
+    sys.stderr.write(f"things2md: Unable to find template: {ARG_TEMPLATE}\n")
+    exit(1)
 
 # #############################################################################
 # GLOBALS

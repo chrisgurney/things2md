@@ -8,5 +8,16 @@
         "incomplete": "[ ]",
         "canceled": "[x]",
         "other": "[/]"
+    },
+    "templates": [
+        {
+            "name": "default",
+            "groupby_project": "\n## ☑️ {project}\n",
+            "groupby_date": "\n## ☑️ {date}\n",
+            "project": "- {status} {title} {date} {deadline}",
+            "task": "- {status} [[{project}]] {project_sep} {heading} {title} • {date} {deadline_sep} {deadline} {tags}"
+        },
+        {
+            "name": "simple"
     }
 }
