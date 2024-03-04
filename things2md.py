@@ -26,11 +26,11 @@ except:
     sys.stderr.write(f"things2md: Unable to open config file: {THINGS2MD_CONFIG_FILE}\n")
     exit(1)
 
-CONFIG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
-PROJECT_SEPARATOR = CONFIG.get("project_separator", "")
-HEADING_SEPARATOR = CONFIG.get("heading_separator", "")
-AREA_SEPARATOR = CONFIG.get("area_separator", "")
-DEADLINE_SEPARATOR = CONFIG.get("deadline_separator", "")
+CFG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
+CFG_PROJECT_SEPARATOR = CONFIG.get("project_sep", "")
+CFG_HEADING_SEPARATOR = CONFIG.get("heading_sep", "")
+CFG_AREA_SEPARATOR = CONFIG.get("area_sep", "")
+CFG_DEADLINE_SEPARATOR = CONFIG.get("deadline_sep", "")
 
 # #############################################################################
 # CLI ARGUMENTS
@@ -152,8 +152,8 @@ def has_skip_tags(tags_to_check):
     Returns True if any of the tags in the list provided is in ENV_SKIP_TAGS.
     '''
     skip = False
-    if CONFIG_SKIP_TAGS:
-        if any(item in tags_to_check for item in CONFIG_SKIP_TAGS):
+    if CFG_SKIP_TAGS:
+        if any(item in tags_to_check for item in CFG_SKIP_TAGS):
             skip = True
     return skip
 
@@ -430,16 +430,16 @@ for row in task_results:
     if not ARG_PROJECT:
         if row.get('project') is not None:
             taskProjectRaw = projects[row['project']]
-            taskProject = f"{taskProjectRaw} {PROJECT_SEPARATOR} "
+            taskProject = f"{taskProjectRaw} {CFG_PROJECT_SEPARATOR} "
         elif row.get('heading') is not None:
             # if it's not set, this may have a heading, so get the project name from it's UUID instead
             # TODO: should we store headings for faster lookups?
             heading_task = things.tasks(uuid=row['heading'])
-            taskProject = format_project_name(heading_task['project_title']) + " " + PROJECT_SEPARATOR + " "
+            taskProject = format_project_name(heading_task['project_title']) + " " + CFG_PROJECT_SEPARATOR + " "
 
     # heading
     if 'heading_title' in row:
-        taskProject += f"{row['heading_title']} {PROJECT_SEPARATOR} "
+        taskProject += f"{row['heading_title']} {CFG_PROJECT_SEPARATOR} "
 
     # task date
     work_task_date = ""

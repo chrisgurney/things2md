@@ -1,7 +1,7 @@
 {
     "skip_tags": "personal,pers,ignore",
-    "project_separator": "//",
-    "heading_separator": "//",
-    "area_separator": "//",
-    "deadline_separator": "⚑"
+    "project_sep": "//",
+    "heading_sep": "//",
+    "area_sep": "//",
+    "deadline_sep": "⚑"
 }
