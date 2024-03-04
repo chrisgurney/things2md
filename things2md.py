@@ -23,7 +23,7 @@ parser.add_argument('--date', help='Date to get completed tasks for, in ISO form
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
 parser.add_argument('--format', default=[], nargs='+', choices=['note','noemojis'], help='Format modes. Pick one or more of:\n note: Outputs each task as a formatted note.\n noemojis: Strips emojis.')
-parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
+parser.add_argument('--groupby', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--project', help='If provided, only tasks for this project are fetched.')
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.')
