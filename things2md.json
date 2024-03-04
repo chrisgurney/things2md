@@ -6,9 +6,9 @@
     "project_sep": "//",
     "skip_tags": "personal,pers,ignore",
     "status_symbols": {
-        "incomplete": "[ ]",
         "canceled": "[x]",
-        "other": "[/]"
+        "completed": "[/]",
+        "incomplete": "[ ]"
     },
     "templates": [
         {

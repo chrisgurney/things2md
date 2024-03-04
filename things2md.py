@@ -454,7 +454,7 @@ for task in task_results:
     vars['gcal_url'] = get_gcal_url(task['uuid'], task['title'])
     vars['notes'] = format_notes(task['notes']) if task['notes'] else None
     vars['url'] = things.link(task['uuid'])
-    vars['status'] = CFG_STATUS_SYMBOLS.get(task['status'], CFG_STATUS_SYMBOLS['other'])
+    vars['status'] = CFG_STATUS_SYMBOLS.get(task['status'], "")
     # TODO: consider other tag list formats (e.g., for frontmatter lists)
     vars['tags'] = "#" + " #".join(task['tags']) if 'tags' in task else ""
     vars['title'] = task['title']
@@ -482,7 +482,7 @@ for task in task_results:
                 subtasks_md_output = ""
                 for checklist_item in task.get('checklist'):
                     subtask_vars = {}
-                    subtask_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], CFG_STATUS_SYMBOLS['other'])
+                    subtask_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], "")
                     subtask_vars['title'] = checklist_item['title']
                     if subtasks_md_output: subtasks_md_output += "\n"
                     subtasks_md_output += indent_string(CFG_TEMPLATE.get("subtask").format(**subtask_vars))
