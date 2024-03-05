@@ -238,6 +238,10 @@ def query_projects(first_datetime):
         stop_date = first_datetime.strftime("%Y-%m-%d")
         projects += things.projects(stop_date=f'>{stop_date}', **kwargs)
 
+    if ARG_ORDERBY == "project":
+        # FIX: this won't properly sort projects we've removed emojis from, or upper vs. lower-case titles
+        projects.sort(key=lambda x: x.get("title",""))
+
     return projects
 
 def query_tasks(first_datetime, last_datetime = None):
@@ -299,7 +303,7 @@ def query_tasks(first_datetime, last_datetime = None):
         tasks = tasks + next_day_tasks
 
     #
-    # filter based on arguments
+    # order + group based on arguments
     #
 
     # return tasks based on the provided date
@@ -320,8 +324,8 @@ def query_tasks(first_datetime, last_datetime = None):
     #
    
     if ARG_ORDERBY == "project":
-        # FIXED: does sort by name
         tasks.sort(key=lambda x: x['stop_date'] if x['stop_date'] is not None else float('-inf'), reverse=True)
+        # FIX: this won't properly sort projects we've removed emojis from, or upper vs. lower-case titles
         tasks.sort(key=lambda x: x.get("project_title",""))
     elif ARG_ORDERBY == 'index':
         pass
@@ -574,6 +578,7 @@ for task in task_results:
     if ARG_GROUPBY == "date":
         if vars['date'] != work_task_date_previous:
             try:
+                # FIX: show header somewhere
                 completed_work_tasks[task['uuid'] + "-"] = CFG_TEMPLATE.get("groupby_date").format(**vars)
             except KeyError as e:
                 sys.stderr.write(f"things2md: Invalid groupby_date template variable: '{e.args[0]}'.")
@@ -582,6 +587,7 @@ for task in task_results:
     elif ARG_GROUPBY == "project":
         if 'project' in vars and vars['project'] and vars['project'] != taskProject_previous:
             try:
+                # FIX: show header somewhere
                 completed_work_tasks[task['uuid'] + "-"] = CFG_TEMPLATE.get("groupby_project").format(**vars)
             except KeyError as e:
                 sys.stderr.write(f"things2md: Invalid groupby_project template variable: '{e.args[0]}'.")
