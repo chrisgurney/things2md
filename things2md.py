@@ -23,7 +23,7 @@ _required_args = ["date", "due", "project", "projects", "range", "tag", "today"]
 parser = argparse.ArgumentParser(description="Things3 database -> Markdown conversion script.", formatter_class=RawTextHelpFormatter,
                                  epilog=f"At least one of these arguments is required: {', '.join(_required_args)}")
 
-parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).')
+parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).', type=datetime.fromisoformat)
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
 parser.add_argument('--groupby', choices=['date','project'], help='How to group the tasks.')
@@ -269,7 +269,7 @@ def query_tasks(first_datetime, last_datetime = None):
         kwargs['stop_date'] = f'>{stop_date}'
     elif ARG_DATE:
         kwargs['status'] = None
-        kwargs['stop_date'] = f'{ARG_DATE}'
+        kwargs['stop_date'] = f'{ARG_DATE.strftime("%Y-%m-%d")}'
     elif ARG_DUE:
         kwargs['deadline'] = True
         kwargs['start_date'] = True
@@ -286,13 +286,17 @@ def query_tasks(first_datetime, last_datetime = None):
 
     if DEBUG: kwargs['print_sql'] = True; print("\nTASK QUERY:")
 
-    tasks = things.tasks(**kwargs)
-
+    try:
+        tasks = things.tasks(**kwargs)
+    except ValueError as ve:
+        sys.stderr.write(f"things2md: Things.py Error: {ve.args[0]}\n")
+        exit(1)
+        
     # FIX: get tasks for next day if last_datetime is provided as well
     # get next day's tasks as well, so that we can account for GMT being past midnight local time
     if ARG_DATE: # or last_datetime
         # if ARG_DATE:
-        given_date_obj = datetime.strptime(ARG_DATE, "%Y-%m-%d")
+        given_date_obj = ARG_DATE
         # if last_datetime:
             # given_date_obj = last_datetime
         next_day_date_obj = given_date_obj + relativedelta(days=1)
