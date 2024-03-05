@@ -90,7 +90,7 @@ if CFG_TEMPLATE == None:
 
 # validate the template lines are set
 if CFG_TEMPLATE.get('type') == 'markdown_note':
-    required_template_lines = ["title", "frontmatter", "body"]
+    required_template_lines = ["title", "body"]
 else:
     required_template_lines = ["groupby_project", "groupby_date", "project", "task", "notes", "subtask"]
 if not all(line in CFG_TEMPLATE for line in required_template_lines):
@@ -555,7 +555,6 @@ for task in task_results:
         # markdown_note
         try:
             md_output = CFG_TEMPLATE.get("title").format(**vars)
-            md_output += CFG_TEMPLATE.get("frontmatter").format(**vars)
             md_output += CFG_TEMPLATE.get("body").format(**vars)
         except KeyError as e:
             sys.stderr.write(f"things2md: Invalid markdown_note body template variable: '{e.args[0]}'.")
