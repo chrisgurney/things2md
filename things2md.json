@@ -42,7 +42,7 @@
             "name": "note",
             "type": "markdown_note",
             "title": "## {title}\n",
-            "body": "{notes}\n\n{subtasks}\n---"
+            "body": "{notes}\n\n{subtasks}\n---\n"
         }
     ]
 }
