@@ -35,10 +35,10 @@
         },
         {
             "name": "projects",
-            "groupby_project": "\n## ☑️ {project}\n",
-            "groupby_date": "\n## ☑️ {date}\n",
+            "groupby_project": "",
+            "groupby_date": "",
             "project": "- {title} [↗]({url}) {date} {deadline} (area::{area}) (taglist::{tags})",
-            "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
+            "task": "",
             "notes": "",
             "checklist_item": ""
         },
