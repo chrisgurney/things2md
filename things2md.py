@@ -92,7 +92,7 @@ if CFG_TEMPLATE == None:
 if CFG_TEMPLATE.get('type') == 'markdown_note':
     required_template_lines = ["title", "body"]
 else:
-    required_template_lines = ["groupby_project", "groupby_date", "project", "task", "notes", "subtask"]
+    required_template_lines = ["groupby_project", "groupby_date", "project", "task", "notes", "checklist_item"]
 if not all(line in CFG_TEMPLATE for line in required_template_lines):
     sys.stderr.write(f"things2md: These template lines are required in {THINGS2MD_CONFIG_FILE} "
                      f"for the selected template '{ARG_TEMPLATE}': {required_template_lines}\n")
@@ -450,7 +450,7 @@ for task in task_results:
     vars = {}
     notes_md = ""
     task_md = ""
-    subtasks_md = ""
+    checklist_md = ""
     project_md = ""
     
     # these variables apply to both tasks and projects
@@ -485,18 +485,18 @@ for task in task_results:
                 sys.stderr.write(f"things2md: Invalid task template variable: '{e.args[0]}'.")
                 exit(1)
 
-        # subtasks
+        # checklist
         if 'checklist' in task and task['checklist']:
             for checklist_item in task.get('checklist'):
-                subtask_vars = {}
-                subtask_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], "")
-                subtask_vars['title'] = checklist_item['title']
-                if subtasks_md: subtasks_md += "\n"
-                if CFG_TEMPLATE.get("subtask"):
-                    subtasks_md += CFG_TEMPLATE.get("subtask").format(**subtask_vars)
+                checklist_item_vars = {}
+                checklist_item_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], "")
+                checklist_item_vars['title'] = checklist_item['title']
+                if checklist_md: checklist_md += "\n"
+                if CFG_TEMPLATE.get("checklist_item"):
+                    checklist_md += CFG_TEMPLATE.get("checklist_item").format(**checklist_item_vars)
                 else:
-                    subtasks_md += "- {status} {title}".format(**subtask_vars)
-            vars['subtasks'] = subtasks_md
+                    checklist_md += "- {status} {title}".format(**checklist_item_vars)
+            vars['checklist'] = checklist_md
 
     elif task['type'] == "project":
 
@@ -577,7 +577,7 @@ for task in task_results:
 
         print(md_output)
         if notes_md: print(indent_string(notes_md))
-        if subtasks_md: print(indent_string(subtasks_md))
+        if checklist_md: print(indent_string(checklist_md))
 
     completed_work_task_ids.append(task['uuid'])
 

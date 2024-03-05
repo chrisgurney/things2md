@@ -18,7 +18,7 @@
             "project": "- {status} {title} [↗]({url}) {date} {deadline}",
             "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "notes": "{notes}",
-            "subtask": "- {status} {title}"
+            "checklist_item": "- {status} {title}"
         },
         {
             "name": "simple",
@@ -27,7 +27,7 @@
             "project": "- {status} {title} [↗]({url}) {date} {deadline}",
             "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "notes": "",
-            "subtask": ""
+            "checklist_item": ""
         },
         {
             "name": "projects",
@@ -36,13 +36,13 @@
             "project": "- {title} [↗]({url}) {date} {deadline} (area::{area}) (taglist::{tags})",
             "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "notes": "",
-            "subtask": ""
+            "checklist_item": ""
         },
         {
             "name": "note",
             "type": "markdown_note",
             "title": "## {title}\n\n",
-            "body": "{notes}\n\n{subtasks}\n\n---\n"
+            "body": "{notes}\n\n{checklist}\n\n---\n"
         }
     ]
 }
