@@ -534,15 +534,19 @@ for task in task_results:
                 exit(1)
 
         # checklist
-        if 'checklist' in task and task['checklist']:
-            for checklist_item in task.get('checklist'):
-                checklist_item_vars = {}
-                checklist_item_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], "")
-                checklist_item_vars['title'] = checklist_item['title']
-                if checklist_md: checklist_md += "\n"
-                if CFG_TEMPLATE.get("checklist_item"):
-                    checklist_md += CFG_TEMPLATE.get("checklist_item").format(**checklist_item_vars)
-            vars['checklist'] = checklist_md
+        try:
+            if 'checklist' in task and task['checklist']:
+                for checklist_item in task.get('checklist'):
+                    checklist_item_vars = {}
+                    checklist_item_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], "")
+                    checklist_item_vars['title'] = checklist_item['title']
+                    if checklist_md: checklist_md += "\n"
+                    if CFG_TEMPLATE.get("checklist_item"):
+                        checklist_md += CFG_TEMPLATE.get("checklist_item").format(**checklist_item_vars)
+                vars['checklist'] = checklist_md
+        except KeyError as e:
+            sys.stderr.write(f"things2md: Invalid template variable: '{e.args[0]}'.")
+            exit(1)
 
     elif task['type'] == "project":
 
