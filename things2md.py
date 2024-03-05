@@ -107,7 +107,7 @@ if _cfg_templates := CONFIG.get("templates"):
     else:
         # validate the provided template's params are set
         if CFG_TEMPLATE.get('type') == 'markdown_note':
-            _required_params = ["title", "body"]
+            _required_params = ["title", "body", "checklist_item"]
         else:
             _required_params = ["checklist_item", "groupby_date", "groupby_project", "project", "notes", "task"]
         if any(CFG_TEMPLATE.get(param) is None for param in _required_params):
@@ -538,8 +538,6 @@ for task in task_results:
                 if checklist_md: checklist_md += "\n"
                 if CFG_TEMPLATE.get("checklist_item"):
                     checklist_md += CFG_TEMPLATE.get("checklist_item").format(**checklist_item_vars)
-                else:
-                    checklist_md += "- {status} {title}".format(**checklist_item_vars)
             vars['checklist'] = checklist_md
 
     elif task['type'] == "project":

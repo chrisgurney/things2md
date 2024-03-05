@@ -50,7 +50,8 @@
             "name": "note",
             "type": "markdown_note",
             "title": "## {title}\n\n",
-            "body": "{notes}\n\n{checklist}\n\n---\n"
+            "body": "{notes}\n\n{checklist}\n\n---\n",
+            "checklist_item": "- {status} {title}"
         }
     ]
 }
