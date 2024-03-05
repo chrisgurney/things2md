@@ -392,9 +392,9 @@ def filter_task_title(task_title):
         output = remove_emojis(output)
     return output
 
-def format_notes(notes):
+def filter_notes(notes):
     '''
-    Formats notes by replacing non http links with markdown links.
+    Filters notes by replacing non http links with markdown links.
     '''
     if notes:
         non_http_pattern = r'\b((?!http)\w+://\S+)'
@@ -503,7 +503,7 @@ for task in task_results:
     vars['deadline'] = task['deadline'] if task['deadline'] is not None else ""
     vars['deadline_sep'] = CFG_DEADLINE_SEPARATOR if vars['deadline'] else ""
     vars['gcal_url'] = get_gcal_url(task['uuid'], task['title'])
-    vars['notes'] = format_notes(task['notes']) if task['notes'] else None
+    vars['notes'] = filter_notes(task['notes']) if task['notes'] else None
     vars['url'] = things.link(task['uuid'])
     vars['status'] = CFG_STATUS_SYMBOLS.get(task['status'], "")
     # TODO: consider other tag list formats (e.g., for frontmatter lists)
