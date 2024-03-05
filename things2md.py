@@ -471,10 +471,8 @@ else:
 # Process All The Things
 # 
 
-completed_work_tasks = {}
-skip_tag_tasks = {}
-completed_work_task_ids = []
-task_notes = {}
+things_outputted = []
+things_skipped = {}
 
 header_date_previous = ""
 header_project_previous = "TASKPROJECTPREVIOUS"
@@ -485,7 +483,7 @@ for task in task_results:
 
     # skip this task if requested
     if 'tags' in task and has_skip_tags(task['tags']):
-        skip_tag_tasks[task['uuid']] = dict(task)
+        things_skipped[task['uuid']] = dict(task)
         if DEBUG: print(f"... SKIPPED (TAG): {dict(task)}")
         continue
 
@@ -553,7 +551,7 @@ for task in task_results:
         # skip if project's area has SKIP_TAGS
         if 'area' in task:
             if has_skip_tags(areas[task['area']].get('tags', [])):
-                skip_tag_tasks[task['uuid']] = dict(task)
+                things_skipped[task['uuid']] = dict(task)
                 if DEBUG: print(f"... SKIPPED (AREA TAG): {dict(task)}")
                 continue
         vars['area'] = filter_area_title(task['area_title']) if 'area_title' in task else ""
@@ -629,18 +627,17 @@ for task in task_results:
         if notes_md: print(indent_string(notes_md))
         if checklist_md: print(indent_string(checklist_md))
 
-    completed_work_task_ids.append(task['uuid'])
+    things_outputted.append(task)
 
 #
 # Summarize
 # 
 
 if DEBUG:
-    print(f"\nTASKS COMPLETED ({len(completed_work_tasks)}):\n{completed_work_tasks}")
-    print(f"\nCOMPLETED NOTES ({len(task_notes)}):\n{task_notes}")
-    print(f"\nSKIPPED TASKS ({len(skip_tag_tasks)}):\n{skip_tag_tasks}")
+    print(f"\nTHINGS OUTPUT ({len(things_outputted)}):\n{things_outputted}")
+    print(f"\nSKIPPED TASKS ({len(things_skipped)}):\n{things_skipped}")
 
-if len(skip_tag_tasks) > 0:
-    sys.stderr.write(f"things2md: Skipped {len(skip_tag_tasks)} tasks or projects with specified SKIP_TAGS\n")
+if len(things_skipped) > 0:
+    sys.stderr.write(f"things2md: Skipped {len(things_skipped)} tasks or projects with specified skip_tags\n")
 
 if DEBUG: print("\nDONE!")
