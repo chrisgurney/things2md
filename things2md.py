@@ -640,4 +640,8 @@ if DEBUG:
 if len(things_skipped) > 0:
     sys.stderr.write(f"things2md: Skipped {len(things_skipped)} tasks or projects with specified skip_tags\n")
 
+if len(things_outputted) == 0:
+    sys.stderr.write(f"things2md: No results met the given criteria!\n")
+    exit(0)
+
 if DEBUG: print("\nDONE!")
