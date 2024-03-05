@@ -218,7 +218,11 @@ def query_areas():
     kwargs = dict()
     if DEBUG: kwargs['print_sql'] = True; print("\AREAS QUERY:")
 
-    areas = things.areas(**kwargs)
+    try:
+        areas = things.areas(**kwargs)
+    except ValueError as ve:
+        sys.stderr.write(f"things2md: Things.py Error: {ve.args[0]}\n")
+        exit(1)
 
     return areas
 
@@ -229,7 +233,12 @@ def query_projects(first_datetime):
     kwargs = dict(status=None)
     if DEBUG: kwargs['print_sql'] = True; print("\nPROJECT QUERY:")
 
-    projects = things.projects(stop_date=False, **kwargs)
+    try:
+        projects = things.projects(stop_date=False, **kwargs)
+    except ValueError as ve:
+        sys.stderr.write(f"things2md: Things.py Error: {ve.args[0]}\n")
+        exit(1)
+    
     if first_datetime is not None:
         # FIX: note that this drops the timezone, as Things works off UTC
         # sounds like this needs to be fixed in Things.py:
