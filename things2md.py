@@ -18,7 +18,10 @@ import things
 # CLI ARGUMENTS
 # #############################################################################
 
-parser = argparse.ArgumentParser(description='Things3 database -> Markdown conversion script.', formatter_class=RawTextHelpFormatter)
+_required_args = ["date", "due", "project", "projects", "range", "tag", "today"]
+
+parser = argparse.ArgumentParser(description="Things3 database -> Markdown conversion script.", formatter_class=RawTextHelpFormatter,
+                                 epilog=f"At least one of these arguments is required: {', '.join(_required_args)}")
 
 parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).')
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
@@ -34,6 +37,11 @@ parser.add_argument('--template', default='default', help='Name of the template 
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
 
 args = parser.parse_args()
+
+# make sure at least one required argument is provided
+if all(getattr(args, arg) is None or getattr(args, arg) is False for arg in _required_args):
+    parser.print_help()
+    exit(errno.EINVAL) # Invalid argument error code
 
 DEBUG = args.debug
 ARG_DATE = args.date
