@@ -6,7 +6,7 @@
         "area_sep": "//",
         "date_sep": "•",
         "deadline_sep": "⚑",
-        "heading_sep": "//",
+        "heading_sep": ":",
         "project_sep": "//",
         "status_symbols": {
             "canceled": "[x]",
@@ -20,7 +20,7 @@
             "groupby_project": "\n## ☑️ {project}\n",
             "groupby_date": "\n## ☑️ {date}\n",
             "project": "- {status} {title} [↗]({url}) {date} {deadline}",
-            "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
+            "task": "- {status} [[{project}]] {project_sep} {heading} {heading_sep} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "notes": "{notes}",
             "checklist_item": "- {status} {title}"
         },
@@ -29,7 +29,7 @@
             "groupby_project": "\n## ☑️ {project}\n",
             "groupby_date": "\n## ☑️ {date}\n",
             "project": "- {status} {title} [↗]({url}) {date} {deadline}",
-            "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
+            "task": "- {status} [[{project}]] {project_sep} {heading} {heading_sep} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "notes": "",
             "checklist_item": ""
         },
