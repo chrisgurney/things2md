@@ -1,5 +1,9 @@
 {
     "filters": {
+        "remove_area_emojis": true,
+        "remove_heading_emojis": false,
+        "remove_project_emojis": true,
+        "remove_task_emojis": false,
         "skip_tags": ["personal", "pers", "ignore"]
     },
     "formatting": {

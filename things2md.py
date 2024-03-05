@@ -26,7 +26,6 @@ parser = argparse.ArgumentParser(description="Things3 database -> Markdown conve
 parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).')
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
-parser.add_argument('--format', default=[], nargs='+', choices=['noemojis'], help='Format modes. Pick one or more of:\n noemojis: Strips emojis from project names.')
 parser.add_argument('--groupby', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--project', help='If provided, only tasks for this project are fetched.')
@@ -46,7 +45,6 @@ if all(getattr(args, arg) is None or getattr(args, arg) is False for arg in _req
 DEBUG = args.debug
 ARG_DATE = args.date
 ARG_DUE = args.due
-ARG_FORMAT = args.format
 ARG_GROUPBY = args.groupby
 ARG_ORDERBY = args.orderby
 ARG_PROJECT = args.project
@@ -77,9 +75,13 @@ if any(CONFIG.get(param) is None for param in _required_params):
     _config_error_msg = f"{THINGS2MD_CONFIG_FILE}: All of these params are required: {', '.join(_required_params)}"
 
 if _cfg_filters := CONFIG.get("filters"):
-    _required_params = ["skip_tags"]
+    _required_params = ["remove_area_emojis", "remove_heading_emojis", "remove_project_emojis", "remove_task_emojis", "skip_tags"]
     if any(_cfg_filters.get(param) is None for param in _required_params):
         _config_error_msg = f"{THINGS2MD_CONFIG_FILE} (filters): All of these params are required: {', '.join(_required_params)}"
+    CFG_REMOVE_AREA_EMOJIS = _cfg_filters.get("remove_area_emojis")
+    CFG_REMOVE_HEADING_EMOJIS = _cfg_filters.get("remove_heading_emojis")
+    CFG_REMOVE_PROJECT_EMOJIS = _cfg_filters.get("remove_project_emojis")
+    CFG_REMOVE_TASK_EMOJIS = _cfg_filters.get("remove_task_emojis")
     CFG_SKIP_TAGS = _cfg_filters.get("skip_tags")
 
 if _cfg_formatting := CONFIG.get("formatting"):
@@ -354,14 +356,40 @@ def get_gcal_url(task_id, title):
     url=f"{url_base}?text={event_text}&dates={GCAL_EVENT_DATES}&details={event_details}"
     return url
 
-def format_project_name(project_title):
+def filter_area_title(area_title):
     '''
-    Formats the name of the project for output according to provided arguments.
+    Applies filters to the name of the area for output according to provided arguments.
+    '''
+    output = area_title
+    if CFG_REMOVE_AREA_EMOJIS:
+        output = remove_emojis(output)
+    return output
+
+def filter_heading_title(heading_title):
+    '''
+    Applies filters to  the name of the heading for output according to provided arguments.
+    '''
+    output = heading_title
+    if CFG_REMOVE_HEADING_EMOJIS:
+        output = remove_emojis(output)
+    return output
+
+def filter_project_title(project_title):
+    '''
+    Applies filters to  the name of the project for output according to provided arguments.
     '''
     output = project_title
-    if ARG_FORMAT:
-        if 'noemojis' in ARG_FORMAT:
-            output = remove_emojis(output)
+    if CFG_REMOVE_PROJECT_EMOJIS:
+        output = remove_emojis(output)
+    return output
+
+def filter_task_title(task_title):
+    '''
+    Applies filters to  the name of the task for output according to provided arguments.
+    '''
+    output = task_title
+    if CFG_REMOVE_TASK_EMOJIS:
+        output = remove_emojis(output)
     return output
 
 def format_notes(notes):
@@ -414,7 +442,7 @@ project_results = query_projects(start_datetime)
 if DEBUG: print(f"PROJECTS ({len(project_results)}):")
 for project in project_results:
     if DEBUG: print(dict(project))
-    formatted_project_name = format_project_name(project['title'])
+    formatted_project_name = filter_project_title(project['title'])
     projects[project['uuid']] = formatted_project_name
     if ARG_PROJECT:
         if ARG_PROJECT in (project['title'], formatted_project_name):
@@ -480,18 +508,18 @@ for task in task_results:
     vars['status'] = CFG_STATUS_SYMBOLS.get(task['status'], "")
     # TODO: consider other tag list formats (e.g., for frontmatter lists)
     vars['tags'] = "#" + " #".join(task['tags']) if 'tags' in task else ""
-    vars['title'] = task['title']
+    vars['title'] = filter_task_title(task['title'])
     vars['uuid'] = task['uuid']
 
     if task['type'] == "to-do":
 
-        vars['heading'] = task['heading_title'] if 'heading_title' in task else ""
+        vars['heading'] = filter_heading_title(task['heading_title']) if 'heading_title' in task else ""
         vars['heading_sep'] = CFG_HEADING_SEPARATOR if vars['heading'] else ""
         vars['project'] = projects[task['project']] if 'project' in task else ""
 
         # if this task has a heading, we have to get the project name from the heading's task
         if not vars['project'] and ('heading' in task) and (heading_task := things.tasks(uuid=task['heading'])):
-            vars['project'] = format_project_name(heading_task['project_title'])
+            vars['project'] = filter_project_title(heading_task['project_title'])
         vars['project_sep'] = CFG_PROJECT_SEPARATOR if vars['project'] else ""
         if not CFG_TEMPLATE.get('type'):
             # attempt merge with template
@@ -522,9 +550,9 @@ for task in task_results:
                 skip_tag_tasks[task['uuid']] = dict(task)
                 if DEBUG: print(f"... SKIPPED (AREA TAG): {dict(task)}")
                 continue
-        vars['area'] = remove_emojis(task['area_title']) if 'area_title' in task else ""
+        vars['area'] = filter_area_title(task['area_title']) if 'area_title' in task else ""
         vars['area_sep'] = CFG_AREA_SEPARATOR if vars['area'] else ""
-        vars['title'] = format_project_name(task['title'])
+        vars['title'] = filter_project_title(task['title'])
 
         # attempt merge with template
         try: 
