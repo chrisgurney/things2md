@@ -575,7 +575,7 @@ for task in task_results:
     # prepare groupby headers
     #
 
-    if ARG_GROUPBY == "date":
+    if ARG_GROUPBY == "date" and CFG_TEMPLATE.get("groupby_date"):
         if vars['date'] != header_date_previous:
             try:
                 print(CFG_TEMPLATE.get("groupby_date").format(**vars))
@@ -583,7 +583,7 @@ for task in task_results:
                 sys.stderr.write(f"things2md: Invalid groupby_date template variable: '{e.args[0]}'.")
                 exit(1)
             header_date_previous = vars['date']
-    elif ARG_GROUPBY == "project":
+    elif ARG_GROUPBY == "project" and CFG_TEMPLATE.get("groupby_project"):
         if 'project' in vars and vars['project'] and vars['project'] != header_project_previous:
             try:
                 print(CFG_TEMPLATE.get("groupby_project").format(**vars))
