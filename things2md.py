@@ -476,8 +476,8 @@ skip_tag_tasks = {}
 completed_work_task_ids = []
 task_notes = {}
 
-work_task_date_previous = ""
-taskProject_previous = "TASKPROJECTPREVIOUS"
+header_date_previous = ""
+header_project_previous = "TASKPROJECTPREVIOUS"
 
 if DEBUG: print(f"\nTASKS ({len(task_results)}):")
 
@@ -576,23 +576,21 @@ for task in task_results:
     #
 
     if ARG_GROUPBY == "date":
-        if vars['date'] != work_task_date_previous:
+        if vars['date'] != header_date_previous:
             try:
-                # FIX: show header somewhere
-                completed_work_tasks[task['uuid'] + "-"] = CFG_TEMPLATE.get("groupby_date").format(**vars)
+                print(CFG_TEMPLATE.get("groupby_date").format(**vars))
             except KeyError as e:
                 sys.stderr.write(f"things2md: Invalid groupby_date template variable: '{e.args[0]}'.")
                 exit(1)
-            work_task_date_previous = vars['date']
+            header_date_previous = vars['date']
     elif ARG_GROUPBY == "project":
-        if 'project' in vars and vars['project'] and vars['project'] != taskProject_previous:
+        if 'project' in vars and vars['project'] and vars['project'] != header_project_previous:
             try:
-                # FIX: show header somewhere
-                completed_work_tasks[task['uuid'] + "-"] = CFG_TEMPLATE.get("groupby_project").format(**vars)
+                print(CFG_TEMPLATE.get("groupby_project").format(**vars))
             except KeyError as e:
                 sys.stderr.write(f"things2md: Invalid groupby_project template variable: '{e.args[0]}'.")
                 exit(1)
-            taskProject_previous = vars['project']
+            header_project_previous = vars['project']
 
     #
     # output
