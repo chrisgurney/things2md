@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(description='Things3 database -> Markdown conve
 parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).')
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
-parser.add_argument('--format', default=[], nargs='+', choices=['note','noemojis'], help='Format modes. Pick one or more of:\n note: Outputs each task as a formatted note.\n noemojis: Strips emojis.')
+parser.add_argument('--format', default=[], nargs='+', choices=['noemojis'], help='Format modes. Pick one or more of:\n noemojis: Strips emojis from project names.')
 parser.add_argument('--groupby', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--project', help='If provided, only tasks for this project are fetched.')
@@ -72,10 +72,12 @@ CFG_AREA_SEPARATOR = CONFIG.get("area_sep", "")
 CFG_DATE_SEPARATOR = CONFIG.get("date_sep", "")
 CFG_DEADLINE_SEPARATOR = CONFIG.get("deadline_sep", "")
 CFG_HEADING_SEPARATOR = CONFIG.get("heading_sep", "")
+CFG_MDNOTE = CONFIG.get("mdnote", {})
 CFG_PROJECT_SEPARATOR = CONFIG.get("project_sep", "")
 CFG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
 CFG_STATUS_SYMBOLS = CONFIG.get("status_symbols", {})
 
+# get the provided template
 CFG_TEMPLATES = CONFIG.get("templates", [])
 CFG_TEMPLATE = None
 for template in CFG_TEMPLATES:
@@ -87,7 +89,10 @@ if CFG_TEMPLATE == None:
     exit(1)
 
 # validate the template lines are set
-required_template_lines = ["groupby_project", "groupby_date", "project", "task", "notes", "subtask"]
+if CFG_TEMPLATE.get('type') == 'markdown_note':
+    required_template_lines = ["title", "frontmatter", "body"]
+else:
+    required_template_lines = ["groupby_project", "groupby_date", "project", "task", "notes", "subtask"]
 if not all(line in CFG_TEMPLATE for line in required_template_lines):
     sys.stderr.write(f"things2md: These template lines are required in {THINGS2MD_CONFIG_FILE} "
                      f"for the selected template '{ARG_TEMPLATE}': {required_template_lines}\n")
@@ -415,15 +420,13 @@ else:
     task_results = project_results
 
 #
-# Prepare Tasks
+# Process All The Things
 # 
 
 completed_work_tasks = {}
-cancelled_work_tasks = {}
 skip_tag_tasks = {}
 completed_work_task_ids = []
 task_notes = {}
-task_subtasks = {}
 
 work_task_date_previous = ""
 taskProject_previous = "TASKPROJECTPREVIOUS"
@@ -445,6 +448,10 @@ for task in task_results:
     #
 
     vars = {}
+    notes_md = ""
+    task_md = ""
+    subtasks_md = ""
+    project_md = ""
     
     # these variables apply to both tasks and projects
     vars['date'] = f"{datetime.fromisoformat(task['stop_date']).date()}" if task['stop_date'] is not None else ""
@@ -461,34 +468,38 @@ for task in task_results:
     vars['uuid'] = task['uuid']
 
     if task['type'] == "to-do":
+
         vars['heading'] = task['heading_title'] if 'heading_title' in task else ""
         vars['heading_sep'] = CFG_HEADING_SEPARATOR if vars['heading'] else ""
         vars['project'] = projects[task['project']] if 'project' in task else ""
+
         # if this task has a heading, we have to get the project name from the heading's task
         if not vars['project'] and ('heading' in task) and (heading_task := things.tasks(uuid=task['heading'])):
             vars['project'] = format_project_name(heading_task['project_title'])
         vars['project_sep'] = CFG_PROJECT_SEPARATOR if vars['project'] else ""
-        # attempt merge with template
-        try:
-            md_output = CFG_TEMPLATE.get("task").format(**vars)
-        except KeyError as e:
-            sys.stderr.write(f"things2md: Invalid task template variable: '{e.args[0]}'.")
-            exit(1)
+        if not CFG_TEMPLATE.get('type'):
+            # attempt merge with template
+            try:
+                md_output = CFG_TEMPLATE.get("task").format(**vars)
+            except KeyError as e:
+                sys.stderr.write(f"things2md: Invalid task template variable: '{e.args[0]}'.")
+                exit(1)
 
         # subtasks
-        if CFG_TEMPLATE.get("subtask"):
-            if 'checklist' in task and task['checklist']:
-                # print(task['checklist'])
-                subtasks_md_output = ""
-                for checklist_item in task.get('checklist'):
-                    subtask_vars = {}
-                    subtask_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], "")
-                    subtask_vars['title'] = checklist_item['title']
-                    if subtasks_md_output: subtasks_md_output += "\n"
-                    subtasks_md_output += indent_string(CFG_TEMPLATE.get("subtask").format(**subtask_vars))
-                task_subtasks[task['uuid']] = subtasks_md_output
+        if 'checklist' in task and task['checklist']:
+            for checklist_item in task.get('checklist'):
+                subtask_vars = {}
+                subtask_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], "")
+                subtask_vars['title'] = checklist_item['title']
+                if subtasks_md: subtasks_md += "\n"
+                if CFG_TEMPLATE.get("subtask"):
+                    subtasks_md += CFG_TEMPLATE.get("subtask").format(**subtask_vars)
+                else:
+                    subtasks_md += "- {status} {title}".format(**subtask_vars)
+            vars['subtasks'] = subtasks_md
 
     elif task['type'] == "project":
+
         # skip if project's area has SKIP_TAGS
         if 'area' in task:
             if has_skip_tags(areas[task['area']].get('tags', [])):
@@ -498,6 +509,7 @@ for task in task_results:
         vars['area'] = remove_emojis(task['area_title']) if 'area_title' in task else ""
         vars['area_sep'] = CFG_AREA_SEPARATOR if vars['area'] else ""
         vars['title'] = format_project_name(task['title'])
+
         # attempt merge with template
         try: 
             md_output = CFG_TEMPLATE.get("project").format(**vars)
@@ -535,34 +547,43 @@ for task in task_results:
             taskProject_previous = vars['project']
 
     #
-    # prepare task + project output
+    # output
     #
 
-    md_output = md_output.replace("[[]]", "") # remove empty wikilinks
-    md_output = md_output.strip() # remove spacing around output
-    md_output = re.sub(r'\s+', ' ', md_output) # reduce spaces within output
-
-    #
-    # prepare note output (assuming template is non-empty)
-    #    
-
-    if vars['notes'] and CFG_TEMPLATE.get("notes"):
+    # TODO: move markdown_note type into global enum
+    if CFG_TEMPLATE.get('type') == 'markdown_note':
+        # markdown_note
         try:
-            task_notes[task['uuid']] = CFG_TEMPLATE.get("notes").format(**vars)
+            md_output = CFG_TEMPLATE.get("title").format(**vars)
+            md_output += CFG_TEMPLATE.get("frontmatter").format(**vars)
+            md_output += CFG_TEMPLATE.get("body").format(**vars)
         except KeyError as e:
-            sys.stderr.write(f"things2md: Invalid notes template variable: '{e.args[0]}'.")
+            sys.stderr.write(f"things2md: Invalid markdown_note body template variable: '{e.args[0]}'.")
             exit(1)
 
-    #
-    # store results for output later 
-    #
+        print(md_output)
+    else:
+        # prepare task + project output
+        md_output = md_output.replace("[[]]", "") # remove empty wikilinks
+        md_output = md_output.strip() # remove spacing around output
+        md_output = re.sub(r'\s+', ' ', md_output) # reduce spaces within output
 
-    completed_work_tasks[task['uuid']] = md_output
-    if task['status'] == 'canceled': cancelled_work_tasks[task['uuid']] = md_output
+        # prepare task/project notes output (assuming template is non-empty)
+        if vars['notes'] and CFG_TEMPLATE.get("notes"):
+            try:
+                notes_md = CFG_TEMPLATE.get("notes").format(**vars)
+            except KeyError as e:
+                sys.stderr.write(f"things2md: Invalid notes template variable: '{e.args[0]}'.")
+                exit(1)
+
+        print(md_output)
+        if notes_md: print(indent_string(notes_md))
+        if subtasks_md: print(indent_string(subtasks_md))
+
     completed_work_task_ids.append(task['uuid'])
 
 #
-# Summary
+# Summarize
 # 
 
 if DEBUG:
@@ -572,28 +593,5 @@ if DEBUG:
 
 if len(skip_tag_tasks) > 0:
     sys.stderr.write(f"things2md: Skipped {len(skip_tag_tasks)} tasks or projects with specified SKIP_TAGS\n")
-
-#
-# Write Tasks
-# 
-
-if DEBUG: print("\nWRITING TASKS ({}):".format(len(completed_work_tasks)))
-
-if completed_work_tasks:
-    # if not ARG_SIMPLE and ARG_RANGE != None:
-    #     print('# ☑️ Since {}'.format(ARG_RANGE.title()))
-    
-    for key in completed_work_tasks:
-        # if DEBUG: print(completed_work_tasks[key])
-        print(f"{completed_work_tasks[key]}")
-        if key in task_notes:
-            if 'note' in ARG_FORMAT:
-                print(f"{task_notes[key]}")
-            else:
-                print(f"{indent_string(task_notes[key])}")
-        if key in task_subtasks:
-            print(task_subtasks[key])
-        if 'note' in ARG_FORMAT:
-            print("\n---")
 
 if DEBUG: print("\nDONE!")

@@ -37,6 +37,13 @@
             "task": "- {status} [[{project}]] {project_sep} {heading} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "notes": "",
             "subtask": ""
+        },
+        {
+            "name": "note",
+            "type": "markdown_note",
+            "title": "## {title}\n",
+            "frontmatter": "---\ntags: {tags}\n---\n",
+            "body": "{notes}\n{subtasks}\n---"
         }
     ]
 }
