@@ -62,46 +62,60 @@ ARG_TODAY = args.today
 # #############################################################################
 
 THINGS2MD_CONFIG_FILE = './things2md.json'
-config_file_path = os.path.join(os.path.dirname(__file__), THINGS2MD_CONFIG_FILE)
+_config_file_path = os.path.join(os.path.dirname(__file__), THINGS2MD_CONFIG_FILE)
 try:
-    with open(config_file_path, "r") as config_file:
+    with open(_config_file_path, "r") as config_file:
         CONFIG = json.load(config_file)
 except:
     sys.stderr.write(f"things2md: Unable to open config file: {THINGS2MD_CONFIG_FILE}\n")
     exit(1)
 
-CFG_AREA_SEPARATOR = CONFIG.get("area_sep", "")
-CFG_DATE_SEPARATOR = CONFIG.get("date_sep", "")
-CFG_DEADLINE_SEPARATOR = CONFIG.get("deadline_sep", "")
-CFG_HEADING_SEPARATOR = CONFIG.get("heading_sep", "")
-CFG_MDNOTE = CONFIG.get("mdnote", {})
-CFG_PROJECT_SEPARATOR = CONFIG.get("project_sep", "")
-CFG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
-CFG_STATUS_SYMBOLS = CONFIG.get("status_symbols", {})
+_config_error_msg = None
 
-# get the provided template
-CFG_TEMPLATES = CONFIG.get("templates", [])
-CFG_TEMPLATE = None
-for template in CFG_TEMPLATES:
-    if template.get("name") == ARG_TEMPLATE:
-        CFG_TEMPLATE = template
-        break
-if CFG_TEMPLATE == None:
-    sys.stderr.write(f"things2md: Unable to find template: {ARG_TEMPLATE}\n")
+_required_params = ["filters", "formatting", "templates"]
+if any(CONFIG.get(param) is None for param in _required_params):
+    _config_error_msg = f"{THINGS2MD_CONFIG_FILE}: All of these params are required: {', '.join(_required_params)}"
+
+if _cfg_filters := CONFIG.get("filters"):
+    _required_params = ["skip_tags"]
+    if any(_cfg_filters.get(param) is None for param in _required_params):
+        _config_error_msg = f"{THINGS2MD_CONFIG_FILE} (filters): All of these params are required: {', '.join(_required_params)}"
+    CFG_SKIP_TAGS = _cfg_filters.get("skip_tags")
+
+if _cfg_formatting := CONFIG.get("formatting"):
+    _required_params = ["area_sep", "date_sep", "deadline_sep", "heading_sep", "project_sep", "status_symbols"]
+    if any(_cfg_formatting.get(param) is None for param in _required_params):
+        _config_error_msg = f"{THINGS2MD_CONFIG_FILE} (formatting): All of these params are required: {', '.join(_required_params)}"
+    CFG_AREA_SEPARATOR = _cfg_formatting.get("area_sep")
+    CFG_DATE_SEPARATOR = _cfg_formatting.get("date_sep")
+    CFG_DEADLINE_SEPARATOR = _cfg_formatting.get("deadline_sep")
+    CFG_HEADING_SEPARATOR = _cfg_formatting.get("heading_sep")
+    CFG_PROJECT_SEPARATOR = _cfg_formatting.get("project_sep")
+    CFG_STATUS_SYMBOLS = _cfg_formatting.get("status_symbols")
+ 
+if _cfg_templates := CONFIG.get("templates"):
+    # get the requested template
+    CFG_TEMPLATE = None
+    for template in _cfg_templates:
+        if template.get("name") == ARG_TEMPLATE:
+            CFG_TEMPLATE = template
+            break
+    if not CFG_TEMPLATE:
+        _config_error_msg = f"Unable to find template: {ARG_TEMPLATE}\n"
+    else:
+        # validate the provided template's params are set
+        if CFG_TEMPLATE.get('type') == 'markdown_note':
+            _required_params = ["title", "body"]
+        else:
+            _required_params = ["checklist_item", "groupby_date", "groupby_project", "project", "notes", "task"]
+        if any(CFG_TEMPLATE.get(param) is None for param in _required_params):
+            _config_error_msg = f"{THINGS2MD_CONFIG_FILE} ({ARG_TEMPLATE}): All of these params are required: {', '.join(_required_params)}"
+        # TODO: for ease-of-use, replace all template variables with lower-case?
+
+if _config_error_msg:
+    sys.stderr.write(f"things2md: {_config_error_msg}")
     exit(1)
 
-# validate the template lines are set
-if CFG_TEMPLATE.get('type') == 'markdown_note':
-    required_template_lines = ["title", "body"]
-else:
-    required_template_lines = ["groupby_project", "groupby_date", "project", "task", "notes", "checklist_item"]
-if not all(line in CFG_TEMPLATE for line in required_template_lines):
-    sys.stderr.write(f"things2md: These template lines are required in {THINGS2MD_CONFIG_FILE} "
-                     f"for the selected template '{ARG_TEMPLATE}': {required_template_lines}\n")
-    exit(1)
-
-# TODO: for ease-of-use, replace all variables with lower-case, prior to doing substitution
-    
 # #############################################################################
 # GLOBALS
 # #############################################################################

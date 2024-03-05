@@ -1,14 +1,18 @@
 {
-    "area_sep": "//",
-    "date_sep": "•",
-    "deadline_sep": "⚑",
-    "heading_sep": "//",
-    "project_sep": "//",
-    "skip_tags": "personal,pers,ignore",
-    "status_symbols": {
-        "canceled": "[x]",
-        "completed": "[/]",
-        "incomplete": "[ ]"
+    "filters": {
+        "skip_tags": ["personal", "pers", "ignore"]
+    },
+    "formatting": {
+        "area_sep": "//",
+        "date_sep": "•",
+        "deadline_sep": "⚑",
+        "heading_sep": "//",
+        "project_sep": "//",
+        "status_symbols": {
+            "canceled": "[x]",
+            "completed": "[/]",
+            "incomplete": "[ ]"
+        }
     },
     "templates": [
         {
