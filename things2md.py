@@ -57,12 +57,6 @@ ARG_TAG = args.tag
 ARG_TEMPLATE = args.template
 ARG_TODAY = args.today
 
-required_args = [ARG_DATE, ARG_DUE, ARG_PROJECTS, ARG_PROJECT, ARG_RANGE, ARG_TAG, ARG_TODAY]
-if all(arg is None or arg is False for arg in required_args):
-    sys.stderr.write(f"things2md: At least one of these arguments are required: date, due, project, projects, range, tag, today\n")
-    parser.print_help()
-    exit(errno.EINVAL) # Invalid argument error code
-
 # #############################################################################
 # CONFIGURATION
 # #############################################################################
