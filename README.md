@@ -1,7 +1,9 @@
-[Things3](https://culturedcode.com/things/) database -> Markdown conversion script. Built on [things.py](https://github.com/thingsapi/things.py) and works great with [Obsidian](#usage-with-obsidian).
+[Things3](https://culturedcode.com/things/) database -> Markdown conversion script.
 
 [![GitHub Release](https://img.shields.io/github/v/release/chrisgurney/things2md?sort=semver)](https://github.com/chrisgurney/things2md/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+`things2md` was built on [things.py](https://github.com/thingsapi/things.py) and works great with [Obsidian](#usage-with-obsidian).
 
 # Installation
 
@@ -32,7 +34,34 @@ Execute `things2md.py` any parameters to see the full list of arguments availabl
 At least one of these arguments is required: date, due, project, projects, range, tag, today
 ```
 
-# Examples
+# Quick Start
+
+Get incomplete tasks:
+
+```
+python3 things2md.py --today
+python3 things2md.py --tag "tagname"
+python3 things2md.py --project "projectname"
+```
+
+Get completed tasks:
+
+```
+python3 things2md.py --date 2024-03-06
+python3 things2md.py --tag "tagname" --range "this week"
+python3 things2md.py --project "projectname" --range "this week"
+```
+
+List my projects:
+
+```
+python3 things2md.py --projects --tempate projects
+```
+
+More examples below. Want to change the output? Modify the [configuration + templates](#configuration--templates).
+
+<details><summary>More mxamples...</summary>
+<p>
 
 ## Listing Completed Tasks
 
@@ -109,6 +138,9 @@ Show uncompleted tasks, tagged with "note", formatted in Markdown with task name
 ```
 python3 things2md.py --tag "note" --template note
 ```
+
+</p>
+</details>
 
 # Configuration + Templates
 
@@ -209,7 +241,7 @@ For example, using the provided `note` template outputs each individual task as 
 - subtasks follow as a list;
 - and each note is separated by a line (`---`).
 
-Output is done in this order:
+Output is in this order:
 
 1. `title`
 2. `body`
