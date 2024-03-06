@@ -14,14 +14,17 @@ from datetime import datetime
 from dateutil.relativedelta import *
 import things
 
+THINGS2MD_CONFIG_FILE = './things2md.json'
+
 # #############################################################################
 # CLI ARGUMENTS
 # #############################################################################
 
 _required_args = ["date", "due", "project", "projects", "range", "tag", "today"]
+_required_args_msg = f"At least one of these arguments is required: {', '.join(_required_args)}"
 
 parser = argparse.ArgumentParser(description="Things3 database -> Markdown conversion script.", formatter_class=RawTextHelpFormatter,
-                                 epilog=f"At least one of these arguments is required: {', '.join(_required_args)}")
+                                 epilog=f"{_required_args_msg}\n\nConfiguration options for {THINGS2MD_CONFIG_FILE} are documented in README.md")
 
 parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).', type=datetime.fromisoformat)
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
@@ -39,7 +42,7 @@ args = parser.parse_args()
 
 # make sure at least one required argument is provided
 if all(getattr(args, arg) is None or getattr(args, arg) is False for arg in _required_args):
-    parser.print_help()
+    sys.stderr.write(f"things2md: {_required_args_msg}\nUse --help to learn about available options.\n\n")
     exit(errno.EINVAL) # Invalid argument error code
 
 DEBUG = args.debug
@@ -56,10 +59,9 @@ ARG_TEMPLATE = args.template
 ARG_TODAY = args.today
 
 # #############################################################################
-# CONFIGURATION
+# LOAD CONFIGURATION
 # #############################################################################
 
-THINGS2MD_CONFIG_FILE = './things2md.json'
 _config_file_path = os.path.join(os.path.dirname(__file__), THINGS2MD_CONFIG_FILE)
 try:
     with open(_config_file_path, "r") as config_file:
