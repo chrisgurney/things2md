@@ -40,7 +40,7 @@ At least one of these arguments is required: date, due, project, projects, range
 
 Get incomplete tasks:
 
-```
+```shell
 python3 things2md.py --today
 python3 things2md.py --tag "tagname"
 python3 things2md.py --project "projectname"
@@ -48,7 +48,7 @@ python3 things2md.py --project "projectname"
 
 Get completed tasks:
 
-```
+```shell
 python3 things2md.py --date 2024-03-06
 python3 things2md.py --tag "tagname" --range "this week"
 python3 things2md.py --project "projectname" --range "this week"
@@ -56,7 +56,7 @@ python3 things2md.py --project "projectname" --range "this week"
 
 List my projects:
 
-```
+```shell
 python3 things2md.py --projects --tempate projects
 ```
 
@@ -66,67 +66,67 @@ python3 things2md.py --projects --tempate projects
 ## Listing Completed Tasks
 
 Show tasks completed within the last week, grouped by project, ordered by project:
-```
+```shell
 python3 things2md.py --range "1 week ago" --groupby project --orderby project
 ```
 
 Show tasks completed today:
-```
+```shell
 python3 things2md.py --range "today"
 ```
 
 Show tasks completed today, and omit subtasks and notes:
-```
+```shell
 python3 things2md.py --range "today" --template simple
 ```
 
 BETA: Show tasks completed on a specific date (in ISO format). Potentially fixed: I think due to dates being stored in GMT, if the completion date falls near midnight, it may show up if you're querying tasks for the next day.
-```
+```shell
 python3 things2md.py --date 2024-02-25
 ```
 
 Show tasks completed yesterday:
-```
+```shell
 python3 things2md.py --range "yesterday"
 ```
 
 ...and ordered by project, but omit subtasks, notes, and cancelled tasks:
-```
+```shell
 python3 things2md.py --range "yesterday" --orderby project --template simple
 ```
 
 Show tasks completed in the last 3 days, and omit subtasks, notes, and cancelled tasks:
-```
+```shell
 python3 things2md.py --range "3 days ago" --template simple
 ```
 
 Show tasks completed in the last week, ordered by project, but omit subtasks, notes, and cancelled tasks:
-```
+```shell
 python3 things2md.py --range "1 week ago" --orderby project --template simple
 ```
 
 ## Listing Uncompleted Tasks
 
 Show uncompleted tasks in Today. Note: Evening tasks aren't grouped at the bottom due to things.py lacking support for [the `startBucket` column](https://github.com/chrisgurney/things2md/pull/2#issuecomment-1885672010).
-```
+```shell
 python3 things2md.py --today
 ```
 
 _To further narrow down tasks to be done:_
 
 Show uncompleted tasks for a given project. Project name must match the project name in Things, with one exception: If used in conjunction with `"remove_project_emojis": "true"` then you can provide the project name without emojis. Can use in conjunction with other arguments.
-```
+```shell
 python3 things2md.py --project "🏡 Fix the House"
 python3 things2md.py --project "Fix the House"
 ```
 
 Show uncompleted tasks, tagged with "focus", ordered how they're ordered in Things (though Evening tasks seem to show at the top)
-```
+```shell
 python3 things2md.py --tag "focus" --orderby index
 ```
 
 Show uncompleted tasks with deadlines set, and those deadline dates, ordered by deadline:
-```
+```shell
 python3 things2md.py --due
 ```
 
@@ -135,7 +135,7 @@ python3 things2md.py --due
 _Sometimes my tasks become full notes in Things._
 
 Show uncompleted tasks, tagged with "note", formatted in Markdown with task names as headers, notes as body text, subtasks as a list, with each note separated by `---`:
-```
+```shell
 python3 things2md.py --tag "note" --template note
 ```
 
@@ -212,24 +212,28 @@ Variables map to their equivalents in the Things3 database, for the most part:
 
 From [things2md.json.example](things2md.json.example), here's a regular type template, to get a sense of available variables:
 
-```
-"name": "projects",
-"groupby_project": "\n## ☑️ {project}\n",
-"groupby_date": "\n## ☑️ {date}\n",
-"project": "- {status} {title} [↗]({url}) {date} {deadline}",
-"task": "- {status} [[{project}]] {project_sep} {heading} {heading_sep} {title} [↗]({url}) {date_sep} {date} {deadline_sep} {deadline} {tags}",
-"notes": "{notes}",
-"checklist_item": "- {status} {title}"
+```json
+{
+    "name": "projects",
+    "groupby_project": "\n## ☑️ {project}\n",
+    "groupby_date": "\n## ☑️ {date}\n",
+    "project": "- {status} {title} [↗]({url}) {date} {deadline}",
+    "task": "- {status} [[{project}]] {project_sep} {heading} {heading_sep} {title} [↗]({url}) {date_sep} {date} {deadline_sep} {deadline} {tags}",
+    "notes": "{notes}",
+    "checklist_item": "- {status} {title}"
+}
 ```
 
 ...and here's a `markdown_note` template:
 
-```
-"name": "note",
-"type": "markdown_note",
-"title": "## {title}\n\n",
-"body": "{notes}\n\n{checklist}\n\n---\n",
-"checklist_item": "- {status} {title}"
+```json
+{
+    "name": "note",
+    "type": "markdown_note",
+    "title": "## {title}\n\n",
+    "body": "{notes}\n\n{checklist}\n\n---\n",
+    "checklist_item": "- {status} {title}"
+}
 ```
 
 ### Markdown Notes
