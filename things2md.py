@@ -151,8 +151,6 @@ TODAY = datetime.today().astimezone()
 TODAY_DATE = TODAY.date()
 TODAY_INT = int(TODAY_DATE.strftime('%Y%m%d'))
 TODAY_TIMESTAMP = datetime(TODAY.year, TODAY.month, TODAY.day).timestamp()
-TOMORROW = datetime(TODAY.year, TODAY.month, TODAY.day) + relativedelta(days=1)
-TOMORROW_TIMESTAMP = TOMORROW.timestamp()
 
 # #############################################################################
 # FUNCTIONS
