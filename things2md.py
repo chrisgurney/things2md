@@ -6,6 +6,7 @@ import argparse
 from argparse import RawTextHelpFormatter
 import errno
 import json
+import os
 import re
 import sys
 import urllib.parse
@@ -13,75 +14,115 @@ from datetime import datetime
 from dateutil.relativedelta import *
 import things
 
-# #############################################################################
-# CONFIGURATION
-# #############################################################################
-
 THINGS2MD_CONFIG_FILE = './things2md.json'
-
-try:
-    with open(THINGS2MD_CONFIG_FILE, "r") as config_file:
-        CONFIG = json.load(config_file)
-except:
-    sys.stderr.write(f"things2md: Unable to open config file: {THINGS2MD_CONFIG_FILE}\n")
-    exit(1)
-
-CONFIG_SKIP_TAGS = CONFIG.get("skip_tags", "").split(",") if CONFIG.get("skip_tags") else []
 
 # #############################################################################
 # CLI ARGUMENTS
 # #############################################################################
 
-parser = argparse.ArgumentParser(description='Things3 database -> Markdown conversion script.', formatter_class=RawTextHelpFormatter)
+_required_args = ["date", "due", "project", "projects", "range", "tag", "today"]
+_required_args_msg = f"At least one of these arguments is required: {', '.join(_required_args)}"
 
-parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).')
+parser = argparse.ArgumentParser(description="Things3 database -> Markdown conversion script.", formatter_class=RawTextHelpFormatter,
+                                 epilog=f"{_required_args_msg}\n\nConfiguration options for {THINGS2MD_CONFIG_FILE} are documented in README.md")
+
+parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).', type=datetime.fromisoformat)
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
-parser.add_argument('--format', nargs='+', choices=['note','noemojis','wikilinks'], help='Format modes. Pick one or more of:\n note: Outputs each task as a formatted note.\n noemojis: Strips emojis.\n wikilinks: Formats project names as wikilinks.')
-parser.add_argument('--gcallinks', default=False, action='store_true', help='If provided, appends links to create a Google calendar event for the task.')
-parser.add_argument('--groupby', default='date', choices=['date','project'], help='How to group the tasks.')
+parser.add_argument('--groupby', choices=['date','project'], help='How to group the tasks.')
 parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
 parser.add_argument('--project', help='If provided, only tasks for this project are fetched.')
+parser.add_argument('--projects', default=False, action='store_true', help='If set will show a list of projects only.')
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.')
-parser.add_argument('--simple', default=False, action='store_true', help='If set will hide task subtasks, notes, and cancelled tasks.')
 parser.add_argument('--tag', help='If provided, only uncompleted tasks with this tag are fetched.')
-parser.add_argument('--tasklinks', default=False, action='store_true', help='If provided, appends a link to the task in Things.')
+parser.add_argument('--template', default='default', help='Name of the template to use from the configuration.')
 parser.add_argument('--today', default=False, action='store_true', help='If set will show incomplete tasks in Today.')
-parser.add_argument('--oprojects', default=False, action='store_true', help='If set will show a list of projects, formatted for Obsidian + Dataview.')
 
 args = parser.parse_args()
+
+# make sure at least one required argument is provided
+if all(getattr(args, arg) is None or getattr(args, arg) is False for arg in _required_args):
+    sys.stderr.write(f"things2md: {_required_args_msg}\nUse --help to learn about available options.\n\n")
+    exit(errno.EINVAL) # Invalid argument error code
 
 DEBUG = args.debug
 ARG_DATE = args.date
 ARG_DUE = args.due
-ARG_FORMAT = [] if args.format is None else args.format
-ARG_GCAL_LINKS = args.gcallinks
 ARG_GROUPBY = args.groupby
 ARG_ORDERBY = args.orderby
 ARG_PROJECT = args.project
+ARG_PROJECTS = args.projects
 ARG_PROJECT_UUID = None # set later if ARG_PROJECT is provided
 ARG_RANGE = args.range
-ARG_SIMPLE = args.simple # TODO: might deprecate and fold into 'format' argument
 ARG_TAG = args.tag
-ARG_TASK_LINKS = args.tasklinks
+ARG_TEMPLATE = args.template
 ARG_TODAY = args.today
-ARG_OPROJECTS = args.oprojects
 
-required_args = [ARG_DATE, ARG_DUE, ARG_OPROJECTS, ARG_PROJECT, ARG_RANGE, ARG_TAG, ARG_TODAY]
-if all(arg is None or arg is False for arg in required_args):
-    sys.stderr.write(f"things2md: At least one of these arguments are required: date, due, oprojects, project, range, tag, today\n")
-    parser.print_help()
-    exit(errno.EINVAL) # Invalid argument error code
+# #############################################################################
+# LOAD CONFIGURATION
+# #############################################################################
+
+_config_file_path = os.path.join(os.path.dirname(__file__), THINGS2MD_CONFIG_FILE)
+try:
+    with open(_config_file_path, "r") as config_file:
+        CONFIG = json.load(config_file)
+except:
+    sys.stderr.write(f"things2md: Unable to open config file: {THINGS2MD_CONFIG_FILE}\n")
+    exit(1)
+
+_config_error_msg = None
+
+_required_params = ["filters", "formatting", "templates"]
+if any(CONFIG.get(param) is None for param in _required_params):
+    _config_error_msg = f"{THINGS2MD_CONFIG_FILE}: All of these params are required: {', '.join(_required_params)}"
+
+if _cfg_filters := CONFIG.get("filters"):
+    _required_params = ["remove_area_emojis", "remove_heading_emojis", "remove_project_emojis", "remove_task_emojis", "skip_tags"]
+    if any(_cfg_filters.get(param) is None for param in _required_params):
+        _config_error_msg = f"{THINGS2MD_CONFIG_FILE} (filters): All of these params are required: {', '.join(_required_params)}"
+    CFG_REMOVE_AREA_EMOJIS = _cfg_filters.get("remove_area_emojis")
+    CFG_REMOVE_HEADING_EMOJIS = _cfg_filters.get("remove_heading_emojis")
+    CFG_REMOVE_PROJECT_EMOJIS = _cfg_filters.get("remove_project_emojis")
+    CFG_REMOVE_TASK_EMOJIS = _cfg_filters.get("remove_task_emojis")
+    CFG_SKIP_TAGS = _cfg_filters.get("skip_tags")
+
+if _cfg_formatting := CONFIG.get("formatting"):
+    _required_params = ["area_sep", "date_sep", "deadline_sep", "heading_sep", "project_sep", "status_symbols"]
+    if any(_cfg_formatting.get(param) is None for param in _required_params):
+        _config_error_msg = f"{THINGS2MD_CONFIG_FILE} (formatting): All of these params are required: {', '.join(_required_params)}"
+    CFG_AREA_SEPARATOR = _cfg_formatting.get("area_sep")
+    CFG_DATE_SEPARATOR = _cfg_formatting.get("date_sep")
+    CFG_DEADLINE_SEPARATOR = _cfg_formatting.get("deadline_sep")
+    CFG_HEADING_SEPARATOR = _cfg_formatting.get("heading_sep")
+    CFG_PROJECT_SEPARATOR = _cfg_formatting.get("project_sep")
+    CFG_STATUS_SYMBOLS = _cfg_formatting.get("status_symbols")
+ 
+if _cfg_templates := CONFIG.get("templates"):
+    # get the requested template
+    CFG_TEMPLATE = None
+    for template in _cfg_templates:
+        if template.get("name") == ARG_TEMPLATE:
+            CFG_TEMPLATE = template
+            break
+    if not CFG_TEMPLATE:
+        _config_error_msg = f"Unable to find template: {ARG_TEMPLATE}\n"
+    else:
+        # validate the provided template's params are set
+        if CFG_TEMPLATE.get('type') == 'markdown_note':
+            _required_params = ["title", "body", "checklist_item"]
+        else:
+            _required_params = ["checklist_item", "groupby_date", "groupby_project", "project", "notes", "task"]
+        if any(CFG_TEMPLATE.get(param) is None for param in _required_params):
+            _config_error_msg = f"{THINGS2MD_CONFIG_FILE} ({ARG_TEMPLATE}): All of these params are required: {', '.join(_required_params)}"
+        # TODO: for ease-of-use, replace all template variables with lower-case?
+
+if _config_error_msg:
+    sys.stderr.write(f"things2md: {_config_error_msg}")
+    exit(1)
 
 # #############################################################################
 # GLOBALS
 # #############################################################################
-
-# TODO: move to configuration
-PROJECT_SEPARATOR = "//"
-HEADING_SEPARATOR = "//"
-AREA_SEPARATOR = "//"
-DEADLINE_SEPARATOR = "⚑"
 
 EMOJI_PATTERN = re.compile("["
                            u"\U0001F600-\U0001F64F"
@@ -110,8 +151,6 @@ TODAY = datetime.today().astimezone()
 TODAY_DATE = TODAY.date()
 TODAY_INT = int(TODAY_DATE.strftime('%Y%m%d'))
 TODAY_TIMESTAMP = datetime(TODAY.year, TODAY.month, TODAY.day).timestamp()
-TOMORROW = datetime(TODAY.year, TODAY.month, TODAY.day) + relativedelta(days=1)
-TOMORROW_TIMESTAMP = TOMORROW.timestamp()
 
 # #############################################################################
 # FUNCTIONS
@@ -158,8 +197,8 @@ def has_skip_tags(tags_to_check):
     Returns True if any of the tags in the list provided is in ENV_SKIP_TAGS.
     '''
     skip = False
-    if CONFIG_SKIP_TAGS:
-        if any(item in tags_to_check for item in CONFIG_SKIP_TAGS):
+    if CFG_SKIP_TAGS:
+        if any(item in tags_to_check for item in CFG_SKIP_TAGS):
             skip = True
     return skip
 
@@ -179,7 +218,11 @@ def query_areas():
     kwargs = dict()
     if DEBUG: kwargs['print_sql'] = True; print("\AREAS QUERY:")
 
-    areas = things.areas(**kwargs)
+    try:
+        areas = things.areas(**kwargs)
+    except ValueError as ve:
+        sys.stderr.write(f"things2md: Things.py Error: {ve.args[0]}\n")
+        exit(1)
 
     return areas
 
@@ -190,7 +233,12 @@ def query_projects(first_datetime):
     kwargs = dict(status=None)
     if DEBUG: kwargs['print_sql'] = True; print("\nPROJECT QUERY:")
 
-    projects = things.projects(stop_date=False, **kwargs)
+    try:
+        projects = things.projects(stop_date=False, **kwargs)
+    except ValueError as ve:
+        sys.stderr.write(f"things2md: Things.py Error: {ve.args[0]}\n")
+        exit(1)
+    
     if first_datetime is not None:
         # FIX: note that this drops the timezone, as Things works off UTC
         # sounds like this needs to be fixed in Things.py:
@@ -199,15 +247,11 @@ def query_projects(first_datetime):
         stop_date = first_datetime.strftime("%Y-%m-%d")
         projects += things.projects(stop_date=f'>{stop_date}', **kwargs)
 
-    return projects
+    if ARG_ORDERBY == "project":
+        # FIX: this won't properly sort projects we've removed emojis from, or upper vs. lower-case titles
+        projects.sort(key=lambda x: x.get("title",""))
 
-def query_subtasks(task_ids):
-    '''
-    Fetches subtasks given a list of task IDs.
-    '''
-    kwargs = dict(include_items=True)
-    if DEBUG: print("\nSUBTASK QUERY:"); kwargs['print_sql'] = True
-    return [things.todos(task_id, **kwargs) for task_id in task_ids]
+    return projects
 
 def query_tasks(first_datetime, last_datetime = None):
     '''
@@ -215,7 +259,8 @@ def query_tasks(first_datetime, last_datetime = None):
     '''
     # things.py parameter documention here:
     # https://thingsapi.github.io/things.py/things/api.html#tasks
-    kwargs = dict()
+
+    kwargs = dict(include_items=True)
 
     if ARG_PROJECT:
         kwargs['project'] = ARG_PROJECT_UUID
@@ -233,7 +278,7 @@ def query_tasks(first_datetime, last_datetime = None):
         kwargs['stop_date'] = f'>{stop_date}'
     elif ARG_DATE:
         kwargs['status'] = None
-        kwargs['stop_date'] = f'{ARG_DATE}'
+        kwargs['stop_date'] = f'{ARG_DATE.strftime("%Y-%m-%d")}'
     elif ARG_DUE:
         kwargs['deadline'] = True
         kwargs['start_date'] = True
@@ -250,13 +295,17 @@ def query_tasks(first_datetime, last_datetime = None):
 
     if DEBUG: kwargs['print_sql'] = True; print("\nTASK QUERY:")
 
-    tasks = things.tasks(**kwargs)
-
+    try:
+        tasks = things.tasks(**kwargs)
+    except ValueError as ve:
+        sys.stderr.write(f"things2md: Things.py Error: {ve.args[0]}\n")
+        exit(1)
+        
     # FIX: get tasks for next day if last_datetime is provided as well
     # get next day's tasks as well, so that we can account for GMT being past midnight local time
     if ARG_DATE: # or last_datetime
         # if ARG_DATE:
-        given_date_obj = datetime.strptime(ARG_DATE, "%Y-%m-%d")
+        given_date_obj = ARG_DATE
         # if last_datetime:
             # given_date_obj = last_datetime
         next_day_date_obj = given_date_obj + relativedelta(days=1)
@@ -267,7 +316,7 @@ def query_tasks(first_datetime, last_datetime = None):
         tasks = tasks + next_day_tasks
 
     #
-    # filter based on arguments
+    # order + group based on arguments
     #
 
     # return tasks based on the provided date
@@ -288,8 +337,8 @@ def query_tasks(first_datetime, last_datetime = None):
     #
    
     if ARG_ORDERBY == "project":
-        # FIXED: does sort by name
         tasks.sort(key=lambda x: x['stop_date'] if x['stop_date'] is not None else float('-inf'), reverse=True)
+        # FIX: this won't properly sort projects we've removed emojis from, or upper vs. lower-case titles
         tasks.sort(key=lambda x: x.get("project_title",""))
     elif ARG_ORDERBY == 'index':
         pass
@@ -324,31 +373,56 @@ def get_gcal_url(task_id, title):
     url=f"{url_base}?text={event_text}&dates={GCAL_EVENT_DATES}&details={event_details}"
     return url
 
-def format_project_name(project_title):
+def filter_area_title(area_title):
     '''
-    Formats the name of the project for output according to provided arguments.
+    Applies filters to the name of the area for output according to provided arguments.
     '''
-    output = project_title
-    if ARG_FORMAT:
-        if 'noemojis' in ARG_FORMAT:
-            output = remove_emojis(output)
-        if 'wikilinks' in ARG_FORMAT:
-            output = f"[[{output}]]"
+    output = area_title
+    if CFG_REMOVE_AREA_EMOJIS:
+        output = remove_emojis(output)
     return output
 
-def format_notes(notes):
+def filter_heading_title(heading_title):
     '''
-    Formats notes by replacing non http links with markdown links.
+    Applies filters to  the name of the heading for output according to provided arguments.
     '''
-    non_http_pattern = r'\b((?!http)\w+://\S+)'
-    # Find all non-HTTP URI links in the text
-    non_http_links = re.findall(non_http_pattern, notes)
-    # Replace non-HTTP URI links with markdown format
-    for link in non_http_links:
-        # Extract the scheme from the URI
-        scheme = link.split("://")[0].capitalize()
-        markdown_link = f'[{scheme} Link]({link})'
-        notes = notes.replace(link, markdown_link)
+    output = heading_title
+    if CFG_REMOVE_HEADING_EMOJIS:
+        output = remove_emojis(output)
+    return output
+
+def filter_project_title(project_title):
+    '''
+    Applies filters to  the name of the project for output according to provided arguments.
+    '''
+    output = project_title
+    if CFG_REMOVE_PROJECT_EMOJIS:
+        output = remove_emojis(output)
+    return output
+
+def filter_task_title(task_title):
+    '''
+    Applies filters to  the name of the task for output according to provided arguments.
+    '''
+    output = task_title
+    if CFG_REMOVE_TASK_EMOJIS:
+        output = remove_emojis(output)
+    return output
+
+def filter_notes(notes):
+    '''
+    Filters notes by replacing non http links with markdown links.
+    '''
+    if notes:
+        non_http_pattern = r'\b((?!http)\w+://\S+)'
+        # Find all non-HTTP URI links in the text
+        non_http_links = re.findall(non_http_pattern, notes)
+        # Replace non-HTTP URI links with markdown format
+        for link in non_http_links:
+            # Extract the scheme from the URI
+            scheme = link.split("://")[0].capitalize()
+            markdown_link = f'[{scheme} Link]({link})'
+            notes = notes.replace(link, markdown_link)
     return notes
 
 # #############################################################################
@@ -374,24 +448,22 @@ if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_
 
 # get area names
 areas = dict()
-if ARG_OPROJECTS:
-    area_results = query_areas()
-    for area in area_results:
-        areas[area['uuid']] = area['title']
+area_results = query_areas()
+for area in area_results:
+    areas[area['uuid']] = area
 
+projects = {}
 project_results = query_projects(start_datetime)
-
 # format projects:
 # store in associative array for easier reference later
 if DEBUG: print(f"PROJECTS ({len(project_results)}):")
-projects = {}
-for row in project_results:
-    if DEBUG: print(dict(row))
-    formatted_project_name = format_project_name(row['title'])
-    projects[row['uuid']] = formatted_project_name
+for project in project_results:
+    if DEBUG: print(dict(project))
+    formatted_project_name = filter_project_title(project['title'])
+    projects[project['uuid']] = formatted_project_name
     if ARG_PROJECT:
-        if ARG_PROJECT in (row['title'], formatted_project_name):
-            ARG_PROJECT_UUID = row['uuid']
+        if ARG_PROJECT in (project['title'], formatted_project_name):
+            ARG_PROJECT_UUID = project['uuid']
 
 if ARG_PROJECT and ARG_PROJECT_UUID is None:
     sys.stderr.write(f"things2md: Project not found: {ARG_PROJECT}")
@@ -403,223 +475,186 @@ if ARG_PROJECT and ARG_PROJECT_UUID is None:
 
 task_results = {}
 # don't need to get tasks if we're just getting the projects list
-if not ARG_OPROJECTS:
+if not ARG_PROJECTS:
     task_results = query_tasks(start_datetime, end_datetime)
+else:
+    task_results = project_results
 
 #
-# Prepare Tasks
+# Process All The Things
 # 
 
-completed_work_tasks = {}
-cancelled_work_tasks = {}
-skip_tag_tasks = {}
-completed_work_task_ids = []
-task_notes = {}
+things_outputted = []
+things_skipped = {}
 
-work_task_date_previous = ""
-taskProject_previous = "TASKPROJECTPREVIOUS"
+header_date_previous = ""
+header_project_previous = "TASKPROJECTPREVIOUS"
 
 if DEBUG: print(f"\nTASKS ({len(task_results)}):")
-for row in task_results:
 
-    # pre-process tags and skip
-    taskTags = ""
-    if 'tags' in row:
-        if has_skip_tags(row['tags']):
-            skip_tag_tasks[row['uuid']] = dict(row)
-            if DEBUG: print(f"... SKIPPED (TAG): {dict(row)}")
-            continue
-        taskTags = " #" + " #".join(row['tags'])
-    if DEBUG: print(dict(row))
+for task in task_results:
 
-    # project name
-    taskProject = ""
-    taskProjectRaw = "No Project"
-    if not ARG_PROJECT:
-        if row.get('project') is not None:
-            taskProjectRaw = projects[row['project']]
-            taskProject = f"{taskProjectRaw} {PROJECT_SEPARATOR} "
-        elif row.get('heading') is not None:
-            # if it's not set, this may have a heading, so get the project name from it's UUID instead
-            # TODO: should we store headings for faster lookups?
-            heading_task = things.tasks(uuid=row['heading'])
-            taskProject = format_project_name(heading_task['project_title']) + " " + PROJECT_SEPARATOR + " "
+    # skip this task if requested
+    if 'tags' in task and has_skip_tags(task['tags']):
+        things_skipped[task['uuid']] = dict(task)
+        if DEBUG: print(f"... SKIPPED (TAG): {dict(task)}")
+        continue
 
-    # heading
-    if 'heading_title' in row:
-        taskProject += f"{row['heading_title']} {PROJECT_SEPARATOR} "
+    if DEBUG: print(dict(task))
 
-    # task date
-    work_task_date = ""
-    if row.get('stop_date') is not None:
-        work_task_date = datetime.fromisoformat(row['stop_date']).date()
+    #
+    # map Things data to template variables
+    #
 
-    # header
-    if not ARG_SIMPLE:
-        if ARG_GROUPBY == "date" and not ARG_DATE:
-            # date header
-            if work_task_date != work_task_date_previous:
-                completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {work_task_date}\n"
-                work_task_date_previous = work_task_date
-        elif ARG_GROUPBY == "project":
-            # project header
-            if taskProject != taskProject_previous:
-                completed_work_tasks[row['uuid'] + "-"] = f"\n## ☑️ {taskProjectRaw}\n"
-                taskProject_previous = taskProject
-
-    # task title, project, date
-    if 'note' in ARG_FORMAT:
-        work_task = f"# {row['title']}\n"
-    else:
-        work_task = "- "
-        if not ARG_SIMPLE:
-            if row['status'] == 'incomplete':
-                work_task += "[ ] "
-            elif row['status'] == 'canceled':
-                work_task += "[x] "
-            else:
-                work_task += "[/] "
-        # task project
-        if ARG_GROUPBY != "project" or ARG_SIMPLE:
-            work_task += f"{taskProject}"
-        # task name
-        # if it's a project
-        if row['type'] == 'project':
-            # link to it in Things
-            work_task += f"{format_project_name(row['title'])} [↗]({things.link(row['uuid'])})"
-        else:
-            work_task += row['title'].strip()
-            # task link
-            if ARG_TASK_LINKS:
-                work_task += f" [↗]({things.link(row['uuid'])})"
-
-        # task date
-        if work_task_date != "":
-            if ARG_GROUPBY != "date" or (ARG_SIMPLE and ARG_RANGE not in ('today', 'yesterday')):
-                work_task += f" • {work_task_date}"
-        # gcal link
-        if ARG_GCAL_LINKS:
-            work_task += f" [📅]({get_gcal_url(row['uuid'], row['title'])})"
-        if row.get('deadline'):
-            work_task += f" • ⚑ {row['deadline']}"
-
-    # task tags
-    # work_task += f" • {taskTags}"
-    completed_work_tasks[row['uuid']] = work_task
-
-    if row['status'] == 'canceled':
-        cancelled_work_tasks[row['uuid']] = work_task
-
-    completed_work_task_ids.append(row['uuid'])
-
-    if row.get('notes'):
-        task_notes[row['uuid']] = format_notes(row['notes'])
-        
-if DEBUG:
-    print(f"\nTASKS COMPLETED ({len(completed_work_tasks)}):\n{completed_work_tasks}")
-    print(f"\nCOMPLETED NOTES ({len(task_notes)}):\n{task_notes}")
-    print(f"\nSKIPPED TASKS ({len(skip_tag_tasks)}):\n{skip_tag_tasks}")
-
-if len(skip_tag_tasks) > 0:
-    sys.stderr.write(f"things2md: Skipped {len(skip_tag_tasks)} tasks with specified SKIP_TAGS\n")
-
-#
-# Get Subtasks (for completed tasks)
-# 
-
-if not ARG_SIMPLE:
-    tasks_with_subtasks = query_subtasks(completed_work_task_ids)
-    tasks_with_subtasks = [todo for todo in tasks_with_subtasks if todo.get('checklist')]
-
-    if DEBUG: print(f"TASKS WITH SUBTASKS ({len(tasks_with_subtasks)}):")
-    # format subtasks
-    task_subtasks = {}
-    for row in tasks_with_subtasks:
-        if DEBUG: print(row['uuid'], row.get('title'))
-        for checklist_item in row.get('checklist'):
-            if row['uuid'] in task_subtasks:
-                subtask = task_subtasks[row['uuid']] + "\n"
-            else:
-                subtask = ""
-            if 'note' in ARG_FORMAT:
-                subtask += "- "
-            else:
-                subtask += "\t- "
-                if checklist_item.get('stop_date') is not None:
-                    subtask += "[/] "
-                else:
-                    subtask += "[ ] "
-            subtask += checklist_item['title']
-            task_subtasks[row['uuid']] = subtask
-
-    if DEBUG: print(task_subtasks)
-
-#
-# Write Tasks
-# 
-
-if DEBUG: print("\nWRITING TASKS ({}):".format(len(completed_work_tasks)))
-
-if completed_work_tasks:
-    # if not ARG_SIMPLE and ARG_RANGE != None:
-    #     print('# ☑️ Since {}'.format(ARG_RANGE.title()))
+    vars = {}
+    notes_md = ""
+    task_md = ""
+    checklist_md = ""
+    project_md = ""
     
-    for key in completed_work_tasks:
-        # if DEBUG: print(completed_work_tasks[key])
-        if key not in cancelled_work_tasks:
-            print(f"{completed_work_tasks[key]}")
-            if not ARG_SIMPLE:
-                if key in task_notes:
-                    if 'note' in ARG_FORMAT:
-                        print(f"{task_notes[key]}")
-                    else:
-                        print(f"{indent_string(task_notes[key])}")
-                if key in task_subtasks:
-                    print(task_subtasks[key])
-            if 'note' in ARG_FORMAT:
-                print("\n---")
-    if cancelled_work_tasks:
-        if not ARG_SIMPLE:
-            print("\n## 🅇 Cancelled\n")
-            for key in cancelled_work_tasks:
-                print(f"{cancelled_work_tasks[key]}")
-                if key in task_notes:
-                    print(f"{indent_string(task_notes[key])}")
-                if key in task_subtasks:
-                    print(task_subtasks[key])
+    # these variables apply to both tasks and projects
+    vars['date'] = f"{datetime.fromisoformat(task['stop_date']).date()}" if task['stop_date'] is not None else ""
+    vars['date_sep'] = CFG_DATE_SEPARATOR if vars['date'] else ""
+    vars['deadline'] = task['deadline'] if task['deadline'] is not None else ""
+    vars['deadline_sep'] = CFG_DEADLINE_SEPARATOR if vars['deadline'] else ""
+    vars['gcal_url'] = get_gcal_url(task['uuid'], task['title'])
+    vars['notes'] = filter_notes(task['notes']) if task['notes'] else None
+    vars['url'] = things.link(task['uuid'])
+    vars['status'] = CFG_STATUS_SYMBOLS.get(task['status'], "")
+    # TODO: consider other tag list formats (e.g., for frontmatter lists)
+    vars['tags'] = "#" + " #".join(task['tags']) if 'tags' in task else ""
+    vars['title'] = filter_task_title(task['title'])
+    vars['uuid'] = task['uuid']
 
-# format a list of projects as a list with inline attributes for Obsidian, grouped by area
-if ARG_OPROJECTS:
-    # TODO: refactor repeated code here
-    for p in project_results:
-        if 'area' not in p:
-            projectDeadline = ""
-            projectTags = ""
-            if p['deadline']:
-                projectDeadline = f" (deadline:: ⚑ {p['deadline']})"
-            if 'tags' in p:
-                if has_skip_tags(p['tags']):
-                    continue
-                projectTags = ",".join(p['tags'])
-                projectTags = f" (taglist:: {projectTags})"
-            print(f"- {format_project_name(p['title'])} [↗]({things.link(row['uuid'])}){projectDeadline}{projectTags}")
-    for a in area_results:
-        if 'tags' in a:
-            if has_skip_tags(a['tags']):
-                continue  
-        for p in project_results:
-            if 'area' in p:
-                if p['area'] == a['uuid']:
-                    projectArea = f" (area:: {remove_emojis(p['area_title'])})"
-                    projectDeadline = ""
-                    projectTags = ""
-                    if p['deadline']:
-                        projectDeadline = f" (deadline:: ⚑ {p['deadline']})"
-                    if 'tags' in p:
-                        if has_skip_tags(p['tags']):
-                            continue
-                        projectTags = ",".join(p['tags'])
-                        projectTags = f" (taglist:: {projectTags})"
-                    print(f"- {format_project_name(p['title'])} [↗]({things.link(row['uuid'])}){projectArea}{projectDeadline}{projectTags}")
+    if task['type'] == "to-do":
+
+        vars['heading'] = filter_heading_title(task['heading_title']) if 'heading_title' in task else ""
+        vars['heading_sep'] = CFG_HEADING_SEPARATOR if vars['heading'] else ""
+        vars['project'] = projects[task['project']] if 'project' in task else ""
+
+        # if this task has a heading, we have to get the project name from the heading's task
+        if not vars['project'] and ('heading' in task) and (heading_task := things.tasks(uuid=task['heading'])):
+            vars['project'] = filter_project_title(heading_task['project_title'])
+        vars['project_sep'] = CFG_PROJECT_SEPARATOR if vars['project'] else ""
+        if not CFG_TEMPLATE.get('type'):
+            # attempt merge with template
+            try:
+                md_output = CFG_TEMPLATE.get("task").format(**vars)
+            except KeyError as e:
+                sys.stderr.write(f"things2md: Invalid task template variable: '{e.args[0]}'.")
+                exit(1)
+
+        # checklist
+        try:
+            if 'checklist' in task and task['checklist']:
+                for checklist_item in task.get('checklist'):
+                    checklist_item_vars = {}
+                    checklist_item_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], "")
+                    checklist_item_vars['title'] = checklist_item['title']
+                    if checklist_md: checklist_md += "\n"
+                    if CFG_TEMPLATE.get("checklist_item"):
+                        checklist_md += CFG_TEMPLATE.get("checklist_item").format(**checklist_item_vars)
+                vars['checklist'] = checklist_md
+        except KeyError as e:
+            sys.stderr.write(f"things2md: Invalid template variable: '{e.args[0]}'.")
+            exit(1)
+
+    elif task['type'] == "project":
+
+        # skip if project's area has SKIP_TAGS
+        if 'area' in task:
+            if has_skip_tags(areas[task['area']].get('tags', [])):
+                things_skipped[task['uuid']] = dict(task)
+                if DEBUG: print(f"... SKIPPED (AREA TAG): {dict(task)}")
+                continue
+        vars['area'] = filter_area_title(task['area_title']) if 'area_title' in task else ""
+        vars['area_sep'] = CFG_AREA_SEPARATOR if vars['area'] else ""
+        vars['title'] = filter_project_title(task['title'])
+
+        # attempt merge with template
+        try: 
+            md_output = CFG_TEMPLATE.get("project").format(**vars)
+        except KeyError as e:
+            sys.stderr.write(f"things2md: Invalid project template variable: '{e.args[0]}'.")
+            exit(1)
+
+    elif task['type'] == "heading":
+        # TODO: do something for --project output
+        pass
+
+    else:
+        # areas?
+        sys.stderr.write(f"things2md: DEBUG: UNHANDLED TYPE: {task['type']}")
+
+    #
+    # prepare groupby headers
+    #
+
+    if ARG_GROUPBY == "date" and CFG_TEMPLATE.get("groupby_date"):
+        if vars['date'] != header_date_previous:
+            try:
+                print(CFG_TEMPLATE.get("groupby_date").format(**vars))
+            except KeyError as e:
+                sys.stderr.write(f"things2md: Invalid groupby_date template variable: '{e.args[0]}'.")
+                exit(1)
+            header_date_previous = vars['date']
+    elif ARG_GROUPBY == "project" and CFG_TEMPLATE.get("groupby_project"):
+        if 'project' in vars and vars['project'] and vars['project'] != header_project_previous:
+            try:
+                print(CFG_TEMPLATE.get("groupby_project").format(**vars))
+            except KeyError as e:
+                sys.stderr.write(f"things2md: Invalid groupby_project template variable: '{e.args[0]}'.")
+                exit(1)
+            header_project_previous = vars['project']
+
+    #
+    # output
+    #
+
+    # TODO: move markdown_note type into global enum
+    if CFG_TEMPLATE.get('type') == 'markdown_note':
+        # markdown_note
+        try:
+            md_output = CFG_TEMPLATE.get("title").format(**vars)
+            md_output += CFG_TEMPLATE.get("body").format(**vars)
+        except KeyError as e:
+            sys.stderr.write(f"things2md: Invalid markdown_note body template variable: '{e.args[0]}'.")
+            exit(1)
+
+        print(md_output)
+    else:
+        # prepare task + project output
+        md_output = md_output.replace("[[]]", "") # remove empty wikilinks
+        md_output = md_output.strip() # remove spacing around output
+        md_output = re.sub(r'\s+', ' ', md_output) # reduce spaces within output
+
+        # prepare task/project notes output (assuming template is non-empty)
+        if vars['notes'] and CFG_TEMPLATE.get("notes"):
+            try:
+                notes_md = CFG_TEMPLATE.get("notes").format(**vars)
+            except KeyError as e:
+                sys.stderr.write(f"things2md: Invalid notes template variable: '{e.args[0]}'.")
+                exit(1)
+
+        print(md_output)
+        if notes_md: print(indent_string(notes_md))
+        if checklist_md: print(indent_string(checklist_md))
+
+    things_outputted.append(task)
+
+#
+# Summarize
+# 
+
+if DEBUG:
+    print(f"\nTHINGS OUTPUT ({len(things_outputted)}):\n{things_outputted}")
+    print(f"\nSKIPPED TASKS ({len(things_skipped)}):\n{things_skipped}")
+
+if len(things_skipped) > 0:
+    sys.stderr.write(f"things2md: Skipped {len(things_skipped)} tasks or projects with specified skip_tags\n")
+
+if len(things_outputted) == 0:
+    sys.stderr.write(f"things2md: No results met the given criteria!\n")
+    exit(0)
 
 if DEBUG: print("\nDONE!")
