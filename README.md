@@ -1,6 +1,4 @@
-[Things3](https://culturedcode.com/things/) database -> Markdown conversion script.
-
-Uses [things.py](https://github.com/thingsapi/things.py) and works great with [Obsidian](#usage-with-obsidian).
+[Things3](https://culturedcode.com/things/) database -> Markdown conversion script. Built on [things.py](https://github.com/thingsapi/things.py) and works great with [Obsidian](#usage-with-obsidian).
 
 [![GitHub Release](https://img.shields.io/github/v/release/chrisgurney/things2md?sort=semver)](https://github.com/chrisgurney/things2md/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
