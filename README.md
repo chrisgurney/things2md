@@ -1,46 +1,35 @@
-Things3 database -> Markdown conversion script.
+[Things3](https://culturedcode.com/things/) database -> Markdown conversion script.
+
+Uses [things.py](https://github.com/thingsapi/things.py) and works great with [Obsidian](#usage-with-obsidian).
 
 # Installation
 
 `pip3 install -r requirements.txt`
 
-Copy `.env.example` to `.env` and set:
-
-- Optional: `SKIP_TAGS` = a comma-separated list of tags for any tasks you want excluded from the output, for example: `"personal,pers"`; note this only works at the line-item (task) level
+Copy `things2md.json.example` to `things2md.json` and configure if desired (see below).
 
 # Usage
 
-Run without any parameters to see the full list of arguments available:
+Execute `things2md.py` any parameters to see the full list of arguments available:
 
 ```
---date DATE           Date to get completed tasks for, in ISO format (e.g., 2023-10-07).
---debug               If set will show script debug information.
---due                 If set will show incomplete tasks with deadlines.
---format {note,noemojis,wikilinks} [{note,noemojis,wikilinks} ...]
-                      Format modes. Pick one or more of:
-                        note: Outputs each task as a formatted note.
-                        noemojis: Strips emojis.
-                        wikilinks: Formats project names as wikilinks.
---gcallinks           If provided, appends links to create a Google calendar event for the task.
---groupby {date,project}
-                      How to group the tasks.
---orderby {date,index,project}
-                      How to order the tasks.
---project PROJECT     If provided, only tasks for this project are fetched.
---range RANGE         Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.
---simple              If set will hide task subtasks, notes, and cancelled tasks.
---tag TAG             If provided, only uncompleted tasks with this tag are fetched.
---tasklinks           If provided, appends a link to the task in Things.
---today               If set will show incomplete tasks in Today.
---oprojects           If set will show a list of projects, formatted for Obsidian + Dataview.
+  -h, --help            show this help message and exit
+  --date DATE           Date to get completed tasks for, in ISO format (e.g., 2023-10-07).
+  --debug               If set will show script debug information.
+  --due                 If set will show incomplete tasks with deadlines.
+  --groupby {date,project}
+                        How to group the tasks.
+  --orderby {date,index,project}
+                        How to order the tasks.
+  --project PROJECT     If provided, only tasks for this project are fetched.
+  --projects            If set will show a list of projects only.
+  --range RANGE         Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.
+  --tag TAG             If provided, only uncompleted tasks with this tag are fetched.
+  --template TEMPLATE   Name of the template to use from the configuration.
+  --today               If set will show incomplete tasks in Today.
+
+At least one of these arguments is required: date, due, project, projects, range, tag, today
 ```
-
-At least one of these arguments are required: `date`, `due`, `oprojects`, `project`, `range`, `tag`, `today`
-
-Notes:
-
-- nothing will be returned if no tasks match the given arguments; and
-- any tasks tagged with any tags in `SKIP_TAGS` as defined in `.env` are not included in the output.
 
 # Examples
 
@@ -56,7 +45,7 @@ Show tasks completed today:
 python3 things2md.py --range "today"
 ```
 
-Show tasks completed today, and omit subtasks, notes, and cancelled tasks:
+Show tasks completed today, and omit subtasks and notes:
 ```
 python3 things2md.py --range "today" --simple
 ```
@@ -95,15 +84,15 @@ python3 things2md.py --today
 
 _To further narrow down tasks to be done:_
 
-Show uncompleted tasks for a given project. Project name must match the project name in Things, with one exception: If used in conjunction with `--format noemojis` then you can provide the project name without emojis. Can use in conjunction with other arguments.
+Show uncompleted tasks for a given project. Project name must match the project name in Things, with one exception: If used in conjunction with `"remove_project_emojis": "true"` then you can provide the project name without emojis. Can use in conjunction with other arguments.
 ```
 python3 things2md.py --project "🏡 Fix the House"
-python3 things2md.py --project "Fix the House" --format noemojis
+python3 things2md.py --project "Fix the House"
 ```
 
-Show uncompleted tasks, tagged with "focus", ordered how they're ordered in Things (though Evening tasks seem to show at the top), and show links that you can click to create a Google Calendar event:
+Show uncompleted tasks, tagged with "focus", ordered how they're ordered in Things (though Evening tasks seem to show at the top)
 ```
-python3 things2md.py --tag "focus" --orderby index --gcallinks
+python3 things2md.py --tag "focus" --orderby index
 ```
 
 Show uncompleted tasks with deadlines set, and those deadline dates, ordered by deadline:
@@ -117,12 +106,123 @@ _Sometimes my tasks become full notes in Things._
 
 Show uncompleted tasks, tagged with "note", formatted in markdown with task names as headers, notes as body text, subtasks as a list, with each note separated by `---`:
 ```
-python3 things2md.py --tag "note" --format note --orderby index
+python3 things2md.py --tag "note" --template note
 ```
+
+# Configuration + Templates
+
+Copy `things2md.json.example` to `things2md.json`.
+
+This file is organized into three sections:
+
+- `filters`
+- `formatting`
+- `templates`
+
+## Filters
+
+Filters effectively define transformations that happen on data extracted from Things3 before being output to markdown.
+
+- `skip_tags` defines a list of tags that, if your task/project has a tag in this list, or your project is in an area that has a tag in this list, that task/project will not be output.
+- `remove_*_emojis` are flags which, if set to true, will remove emojis after these are extracted from the Things3 database.
+
+## Formatting
+
+Formatting defines symbols that are used within templates.
+
+- `*_sep` parameters (i.e., parameters ending with `_sep`) define a type of _separator_ you can use in your template. These _only_ are substituted into the template if the corresponding type is defined for that task/project.
+    - For example, if your template has `{deadline_sep} {deadline}`, then your output will only output the value for `deadline_sep` _if_ your task/project has a `deadline` set; otherwise both values will not be output.
+    - Separators can only be used in task and project templates, as checklist items don't use any of these conditional values.
+- `status_symbols` define how statuses from Things3 are to be represented in Markdown. This may be helpful if you're using a theme with custom status symbols.
+
+## Templates
+
+Templates define the output from `things2md` and consist of the [variables](#variables) outlined in the next section. Substition is done via Python's `format()` function, so anything that it can handle is fair game here.
+
+Here's how each template parameter is used:
+
+- `name` defines the name of the template that you reference using the `--template` CLI argument which, if not used, will apply the template named `default` to any output.
+- `type` is currently only used to distinguish the `markdown_note` template; don't include it otherwise.
+- `groupby_project` and `groupby_date` define the headers that are output when the `--groupby` argument is used.
+- `project` is used if we're outputting a project.
+- `task` is used if we're outputting a task.
+- `notes` is used when notes are being output; either use it or leave it blank.
+    - Notes are automatically indented for non-`markdown_note` templates.
+    - Attempting to prefix this with spacing or a tab will only apply to the first line of the note. 
+- `checklist_item` is used if we're outputting a checklist item (under a task).
+    - Checklist items are automatically indented for non-`markdown_note` templates.
+
+If you wish to omit template parameters, just define the parameter as `""`; or if you prefer an empty line, use `" "`. Newlines can be added by escaping them `\n`.
+
+After [variables](#variables) have been substituted into tasks/projects:
+
+- extra spaces are trimmed down to single spaces;
+- leading and trailing spaces are stripped;
+- empty wikilinks are removed;
+
+While notes are being subtituted:
+
+- non-http URIs are converted into Markdown links (e.g., `things://...` becomes `[Things Link](things://...)`)
+
+### Variables
+
+Variables map to their equivalents in the Things3 database, for the most part:
+
+- If they're not available, they're left blank and are _not_ substituted into templates.
+- `tags` are currently expanded as: `#tag1 #tag2 ...`.
+    - (If there's interest in other formats, such as a comma-separated or bulleted list, let me know.)
+
+#### Example Variable Usage
+
+From [things2md.json.example], here's a regular template:
+
+```
+"name": "projects",
+"groupby_project": "\n## ☑️ {project}\n",
+"groupby_date": "\n## ☑️ {date}\n",
+"project": "- {status} {title} [↗]({url}) {date} {deadline}",
+"task": "- {status} [[{project}]] {project_sep} {heading} {heading_sep} {title} [↗]({url}) {date_sep} {date} {deadline_sep} {deadline} {tags}",
+"notes": "{notes}",
+"checklist_item": "- {status} {title}"
+```
+
+...and here's a `markdown_note` template:
+
+```
+"name": "note",
+"type": "markdown_note",
+"title": "## {title}\n\n",
+"body": "{notes}\n\n{checklist}\n\n---\n",
+"checklist_item": "- {status} {title}"
+```
+
+### Markdown Notes
+
+Sometimes my tasks become full notes in Things. 
+
+The `markdown_note` template type allows you to format tasks (or projects?) as full Markdown note. 
+For example, using the provided `note` template outputs each individual task as follows: task names become a headers, notes become the body text, subtasks follow as a list, with each note is separated by a line (`---`).
+
+NOte output is in this order:
+
+1. `title`
+2. `body`
+3. And then all checklist items are formatted per `checklist_item`
+
+# Migrating from Earlier Versions (<= 1.1)
+
+| If you were using this argument... | ...you can now do this instead: |
+|---|---|
+| `--format noemojis` | Now controlled via config flags, with more granularity available. |
+| `--format note` | Use the note template via `--template note`. Personally I use this in conjunction with `--tag` to locate notes I want in this format. |
+| `--format wikilinks` | Just add `[[` brackets `]]` to your template; the example `default` template is closest to v1.1’s output, so give it a try and modify as needed. |
+| `--simple` | Use the simple template via `--template simple`, which you can now modify as needed. |
+| `--oprojects` | Use the `--projects` argument in conjunction with `--template projects`. |
+| `--tasklinks` | Add links to your tasks using the `{url}` variable; see the example `simple` template. |
 
 # Usage with Obsidian
 
-This script was designed for use in [Obsidian](https://obsidian.md/) for Daily Notes, but as it outputs plain text as markdown, it really can be used anywhere you can run a Python script.
+This script was initially designed for use within [Obsidian](https://obsidian.md/) for Daily Notes, but as it outputs plain text as Markdown, it really can be used anywhere you can run a Python script.
 
 I call this script via the [shell commands community plugin](https://github.com/Taitava/obsidian-shellcommands). Recommended configuration as follows:
 
@@ -132,7 +232,7 @@ I call this script via the [shell commands community plugin](https://github.com/
     - In the _General_ tab, set an alias for the command (e.g., "tasks_today"). You can execute this from a slash command.
     - In the _Output_ tab, under _Output channel for stdout_ set it to _Current file: caret position_
 
-That's it! You can now execute it from a slash command within any note, placing the output wherever your cursor is. Alternately, copy the command's URI (using the link icon under each command) and paste it into a markdown link; clicking that link will execute the command.
+That's it! You can now execute it from a slash command within any note, placing the output wherever your cursor is. Alternately, copy the command's URI (using the 🔗 icon under each command) and paste it into a Markdown link; clicking that link will execute the command.
 
 # References
 
