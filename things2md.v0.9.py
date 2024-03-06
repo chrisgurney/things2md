@@ -57,7 +57,7 @@ ARG_GCAL_LINKS = args.gcallinks
 ARG_GROUPBY = args.groupby
 ARG_ORDERBY = args.orderby
 ARG_RANGE = args.range
-ARG_SIMPLE = args.simple # TODO: deprecate and fold into 'format' argument
+ARG_SIMPLE = args.simple
 ARG_TAG = args.tag
 ARG_TODAY = args.today
 

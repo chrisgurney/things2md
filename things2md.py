@@ -240,7 +240,7 @@ def query_projects(first_datetime):
         exit(1)
     
     if first_datetime is not None:
-        # FIX: note that this drops the timezone, as Things works off UTC
+        # FIXME: note that this drops the timezone, as Things works off UTC
         # sounds like this needs to be fixed in Things.py:
         # https://github.com/chrisgurney/things2md/pull/2#issuecomment-1967535472
         # ...or not? (similar discussion here:) https://github.com/PyGithub/PyGithub/issues/512
@@ -248,7 +248,7 @@ def query_projects(first_datetime):
         projects += things.projects(stop_date=f'>{stop_date}', **kwargs)
 
     if ARG_ORDERBY == "project":
-        # FIX: this won't properly sort projects we've removed emojis from, or upper vs. lower-case titles
+        # FIXME: this won't properly sort projects we've removed emojis from, or upper vs. lower-case titles
         projects.sort(key=lambda x: x.get("title",""))
 
     return projects
@@ -270,7 +270,7 @@ def query_tasks(first_datetime, last_datetime = None):
 
     if first_datetime is not None:
         kwargs['status'] = None
-        # FIX: note that this drops the timezone, as Things works off UTC
+        # FIXME: note that this drops the timezone, as Things works off UTC
         # sounds like this needs to be fixed in Things.py:
         # https://github.com/chrisgurney/things2md/pull/2#issuecomment-1967535472
         # ...or not? (similar discussion here:) https://github.com/PyGithub/PyGithub/issues/512
@@ -301,7 +301,7 @@ def query_tasks(first_datetime, last_datetime = None):
         sys.stderr.write(f"things2md: Things.py Error: {ve.args[0]}\n")
         exit(1)
         
-    # FIX: get tasks for next day if last_datetime is provided as well
+    # FIXME: get tasks for next day if last_datetime is provided as well
     # get next day's tasks as well, so that we can account for GMT being past midnight local time
     if ARG_DATE: # or last_datetime
         # if ARG_DATE:
@@ -323,9 +323,9 @@ def query_tasks(first_datetime, last_datetime = None):
     if ARG_DATE:
         given_date_local = given_date_obj.astimezone()
         given_date_local_eod = given_date_local.replace(hour=23, minute=59, second=59)
-        # FIX: do when we have an end date set 
+        # FIXME: do when we have an end date set 
         for item in tasks[:]:
-            # FIX: should this instead specify that this is UTC?
+            # FIXME: should this instead specify that this is UTC?
             stop_date_local = datetime.strptime(item['stop_date'], "%Y-%m-%d %H:%M:%S").astimezone()
             if stop_date_local > given_date_local and stop_date_local <= given_date_local_eod:
                 pass
@@ -338,7 +338,7 @@ def query_tasks(first_datetime, last_datetime = None):
    
     if ARG_ORDERBY == "project":
         tasks.sort(key=lambda x: x['stop_date'] if x['stop_date'] is not None else float('-inf'), reverse=True)
-        # FIX: this won't properly sort projects we've removed emojis from, or upper vs. lower-case titles
+        # FIXME: this won't properly sort projects we've removed emojis from, or upper vs. lower-case titles
         tasks.sort(key=lambda x: x.get("project_title",""))
     elif ARG_ORDERBY == 'index':
         pass
