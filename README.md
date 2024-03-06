@@ -142,7 +142,7 @@ python3 things2md.py --tag "note" --template note
 </p>
 </details>
 
-Want to change the output? Modify the [configuration + templates](#configuration--templates).
+Want to change the output from the defaults? Modify the [configuration + templates](#configuration--templates) or create a new template and use the `--template` argument to point to it.
 
 # Configuration + Templates
 
