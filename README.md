@@ -3,6 +3,8 @@
 [![GitHub Release](https://img.shields.io/github/v/release/chrisgurney/things2md?sort=semver)](https://github.com/chrisgurney/things2md/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+![Demo of the things2md at a command prompt, next to Things3](./docs/cli_example.gif)
+
 `things2md` was built on [things.py](https://github.com/thingsapi/things.py) and works great with [Obsidian](#usage-with-obsidian).
 
 # Installation
@@ -58,11 +60,7 @@ List my projects:
 python3 things2md.py --projects --tempate projects
 ```
 
-See below for more examples.
-
-Want to change the output? Modify the [configuration + templates](#configuration--templates).
-
-<details>Test <summary>More examples...</summary>
+<details><summary>More examples</summary>
 <p>
 
 ## Listing Completed Tasks
@@ -143,6 +141,8 @@ python3 things2md.py --tag "note" --template note
 
 </p>
 </details>
+
+Want to change the output? Modify the [configuration + templates](#configuration--templates).
 
 # Configuration + Templates
 
