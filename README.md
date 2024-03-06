@@ -104,7 +104,7 @@ python3 things2md.py --due
 
 _Sometimes my tasks become full notes in Things._
 
-Show uncompleted tasks, tagged with "note", formatted in markdown with task names as headers, notes as body text, subtasks as a list, with each note separated by `---`:
+Show uncompleted tasks, tagged with "note", formatted in Markdown with task names as headers, notes as body text, subtasks as a list, with each note separated by `---`:
 ```
 python3 things2md.py --tag "note" --template note
 ```
@@ -121,23 +121,23 @@ This file is organized into three sections:
 
 ## Filters
 
-Filters effectively define transformations that happen on data extracted from Things3 before being output to markdown.
+Filters effectively define transformations that happen on data extracted from Things3 before being output to Markdown.
 
-- `skip_tags` defines a list of tags that, if your task/project has a tag in this list, or your project is in an area that has a tag in this list, that task/project will not be output.
-- `remove_*_emojis` are flags which, if set to true, will remove emojis after these are extracted from the Things3 database.
+- `skip_tags` defines a list of tags that, if your task/project has a tag in this list, or your project is in an area that has a tag in this list, that task/project will **not** be output.
+- `remove_*_emojis` are flags which, if set to `true`, will remove emojis after these are extracted from the Things3 database.
 
 ## Formatting
 
 Formatting defines symbols that are used within templates.
 
-- `*_sep` parameters (i.e., parameters ending with `_sep`) define a type of _separator_ you can use in your template. These _only_ are substituted into the template if the corresponding type is defined for that task/project.
+- `*_sep` parameters (i.e., parameters ending with `_sep`) define a type of _separator_ you can use in your template. These are _only_ substituted into the template if the corresponding type is defined for that task/project.
     - For example, if your template has `{deadline_sep} {deadline}`, then your output will only output the value for `deadline_sep` _if_ your task/project has a `deadline` set; otherwise both values will not be output.
     - Separators can only be used in task and project templates, as checklist items don't use any of these conditional values.
-- `status_symbols` define how statuses from Things3 are to be represented in Markdown. This may be helpful if you're using a theme with custom status symbols.
+- `status_symbols` define how statuses from Things3 are to be represented in Markdown. This may be helpful if you're using an Obsidian theme with custom status symbols.
 
 ## Templates
 
-Templates define the output from `things2md` and consist of the [variables](#variables) outlined in the next section. Substition is done via Python's `format()` function, so anything that it can handle is fair game here.
+Templates define the output from `things2md`, and consist of the [variables](#variables) outlined in the next section. (Variable substitution is done via Python's `format()` function, so anything that it can handle should be fair game here.)
 
 Here's how each template parameter is used:
 
@@ -146,9 +146,9 @@ Here's how each template parameter is used:
 - `groupby_project` and `groupby_date` define the headers that are output when the `--groupby` argument is used.
 - `project` is used if we're outputting a project.
 - `task` is used if we're outputting a task.
-- `notes` is used when notes are being output; either use it or leave it blank.
+- `notes` is used when notes are being output. Either use it or leave it blank.
     - Notes are automatically indented for non-`markdown_note` templates.
-    - Attempting to prefix this with spacing or a tab will only apply to the first line of the note. 
+    - Attempting to prefix this with spacing or a tab will only apply it to the first line of the note. 
 - `checklist_item` is used if we're outputting a checklist item (under a task).
     - Checklist items are automatically indented for non-`markdown_note` templates.
 
@@ -157,12 +157,13 @@ If you wish to omit template parameters, just define the parameter as `""`; or i
 After [variables](#variables) have been substituted into tasks/projects:
 
 - extra spaces are trimmed down to single spaces;
-- leading and trailing spaces are stripped;
-- empty wikilinks are removed;
+- leading and trailing spaces are stripped; and
+- empty wikilinks are removed.
 
 While notes are being subtituted:
 
-- non-http URIs are converted into Markdown links (e.g., `things://...` becomes `[Things Link](things://...)`)
+- non-http URIs are converted into Markdown links.
+    - e.g., `things://...` becomes `[Things Link](things://...)`
 
 ### Variables
 
@@ -170,11 +171,11 @@ Variables map to their equivalents in the Things3 database, for the most part:
 
 - If they're not available, they're left blank and are _not_ substituted into templates.
 - `tags` are currently expanded as: `#tag1 #tag2 ...`.
-    - (If there's interest in other formats, such as a comma-separated or bulleted list, let me know.)
+    - _If there's interest in other formats, such as a comma-separated or bulleted list, let me know._
 
 #### Example Variable Usage
 
-From [things2md.json.example], here's a regular template:
+From [things2md.json.example](things2md.json.example), here's a regular type template, to get a sense of available variables:
 
 ```
 "name": "projects",
@@ -198,12 +199,16 @@ From [things2md.json.example], here's a regular template:
 
 ### Markdown Notes
 
-Sometimes my tasks become full notes in Things. 
+Sometimes I end up writing a lot in my Things3 tasks. If you're ilke me, the `markdown_note` template type allows you to format tasks (or projects?) as full Markdown note. 
 
-The `markdown_note` template type allows you to format tasks (or projects?) as full Markdown note. 
-For example, using the provided `note` template outputs each individual task as follows: task names become a headers, notes become the body text, subtasks follow as a list, with each note is separated by a line (`---`).
+For example, using the provided `note` template outputs each individual task as follows:
 
-NOte output is in this order:
+- the task name become a header;
+- notes become the body text;
+- subtasks follow as a list;
+- and each note is separated by a line (`---`).
+
+Output is done in this order:
 
 1. `title`
 2. `body`
@@ -224,7 +229,9 @@ NOte output is in this order:
 
 This script was initially designed for use within [Obsidian](https://obsidian.md/) for Daily Notes, but as it outputs plain text as Markdown, it really can be used anywhere you can run a Python script.
 
-I call this script via the [shell commands community plugin](https://github.com/Taitava/obsidian-shellcommands). Recommended configuration as follows:
+## Via the [Shell Commands Plugin](https://github.com/Taitava/obsidian-shellcommands)
+
+Using this plugin, the recommended configuration is as follows:
 
 1. Add a command per any of the above examples.
     - Make sure your path to the things2md.py script is absolute (on my system it's at `/opt/homebrew/bin/python3`).
@@ -236,6 +243,6 @@ That's it! You can now execute it from a slash command within any note, placing 
 
 # References
 
+- [things.py](https://github.com/thingsapi/things.py) - The initial version of this script directly queried the database; had I done more research first, I may have maybe used `things.py` instead of doing the reverse-engineering myself, and writing the SQL. `things2md` has now been refactored to use this library, thanks to contributions from [@mikez](https://github.com/mikez)!
 - [obsidian-things-logbook](https://github.com/liamcain/obsidian-things-logbook) - This is an [Obsidian](https://obsidian.md/) plugin that periodically syncs the Things logook with your Obsidian vault. This wasn't the behavior I was looking for, hence why I developed `things2md`.
-- [things.py](https://github.com/thingsapi/things.py) - Had I done more research first, I may have maybe used this instead of writing my own SQL queries. `things2md` has now been refactored to use this library, thanks to contributions from [@mikez](https://github.com/mikez)!
-- [things.sh](https://github.com/AlexanderWillner/things.sh) - I found this shell script late in the development of `things2md`, but it looks like another good interpretation of how to query the Things database.
+- [things.sh](https://github.com/AlexanderWillner/things.sh) - I found this shell script late in the development of `things2md`, but I took a couple cues from this to query the Things database in versions pre-1.0.
