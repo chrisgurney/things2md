@@ -48,7 +48,7 @@ python3 things2md.py --range "today"
 
 Show tasks completed today, and omit subtasks and notes:
 ```
-python3 things2md.py --range "today" --simple
+python3 things2md.py --range "today" --template simple
 ```
 
 BETA: Show tasks completed on a specific date (in ISO format). Potentially fixed: I think due to dates being stored in GMT, if the completion date falls near midnight, it may show up if you're querying tasks for the next day.
@@ -63,17 +63,17 @@ python3 things2md.py --range "yesterday"
 
 ...and ordered by project, but omit subtasks, notes, and cancelled tasks:
 ```
-python3 things2md.py --range "yesterday" --orderby project --simple
+python3 things2md.py --range "yesterday" --orderby project --template simple
 ```
 
 Show tasks completed in the last 3 days, and omit subtasks, notes, and cancelled tasks:
 ```
-python3 things2md.py --range "3 days ago" --simple
+python3 things2md.py --range "3 days ago" --template simple
 ```
 
 Show tasks completed in the last week, ordered by project, but omit subtasks, notes, and cancelled tasks:
 ```
-python3 things2md.py --range "1 week ago" --orderby project --simple
+python3 things2md.py --range "1 week ago" --orderby project --template simple
 ```
 
 ## Listing Uncompleted Tasks
