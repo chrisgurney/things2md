@@ -24,7 +24,7 @@
             "groupby_project": "\n## ☑️ {project}\n",
             "groupby_date": "\n## ☑️ {date}\n",
             "project": "- {status} {title} [↗]({url}) {date} {deadline}",
-            "task": "- {status} [[{project}]] {project_sep} {heading} {heading_sep} {title} {date_sep} {date} {deadline_sep} {deadline} {tags}",
+            "task": "- {status} [[{project}]] {project_sep} {heading} {heading_sep} {title} [↗]({url}) {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "notes": "{notes}",
             "checklist_item": "- {status} {title}"
         },
