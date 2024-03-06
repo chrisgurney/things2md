@@ -1,4 +1,4 @@
-[Things3](https://culturedcode.com/things/) database -> Markdown conversion script.
+[Things3](https://culturedcode.com/things/) database -> Markdown conversion script (with template support).
 
 [![GitHub Release](https://img.shields.io/github/v/release/chrisgurney/things2md?sort=semver)](https://github.com/chrisgurney/things2md/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -249,22 +249,13 @@ Output is in this order:
 2. `body`
 3. And then all checklist items are formatted per `checklist_item`
 
-# Migrating from Earlier Versions (<= 1.1)
-
-| If you were using this argument... | ...you can now do this instead: |
-|---|---|
-| `--format noemojis` | Now controlled via config flags, with more granularity available. |
-| `--format note` | Use the note template via `--template note`. Personally I use this in conjunction with `--tag` to locate notes I want in this format. |
-| `--format wikilinks` | Just add `[[` brackets `]]` to your template; the example `default` template is closest to v1.1’s output, so give it a try and modify as needed. |
-| `--simple` | Use the simple template via `--template simple`, which you can now modify as needed. |
-| `--oprojects` | Use the `--projects` argument in conjunction with `--template projects`. |
-| `--tasklinks` | Add links to your tasks using the `{url}` variable; see the example `simple` template. |
-
 # Usage with Obsidian
 
 This script was initially designed for use within [Obsidian](https://obsidian.md/) for Daily Notes, but as it outputs plain text as Markdown, it really can be used anywhere you can run a Python script.
 
-## Via the [Shell Commands Plugin](https://github.com/Taitava/obsidian-shellcommands)
+![Demo of the things2md in Obsidian](./docs/obsidian_example.gif)
+
+## How to do this via the [Shell Commands Plugin](https://github.com/Taitava/obsidian-shellcommands)
 
 Using this plugin, the recommended configuration is as follows:
 
