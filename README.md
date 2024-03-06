@@ -57,7 +57,7 @@ python3 things2md.py --project "projectname" --range "this week"
 List my projects:
 
 ```shell
-python3 things2md.py --projects --tempate projects
+python3 things2md.py --projects --template projects
 ```
 
 <details><summary>More examples</summary>
