@@ -58,9 +58,11 @@ List my projects:
 python3 things2md.py --projects --tempate projects
 ```
 
-More examples below. Want to change the output? Modify the [configuration + templates](#configuration--templates).
+See below for more examples.
 
-<details><summary>More mxamples...</summary>
+Want to change the output? Modify the [configuration + templates](#configuration--templates).
+
+<details>Test <summary>More examples...</summary>
 <p>
 
 ## Listing Completed Tasks
