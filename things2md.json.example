@@ -23,7 +23,7 @@
             "name": "default",
             "groupby_project": "\n## ☑️ {project}\n",
             "groupby_date": "\n## ☑️ {date}\n",
-            "project": "- {status} {title} [↗]({url}) {date} {deadline}",
+            "project": "- {status} {title} [↗]({url}) {date} {deadline_sep} {deadline}",
             "task": "- {status} [[{project}]] {project_sep} {heading} {heading_sep} {title} [↗]({url}) {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "notes": "{notes}",
             "checklist_item": "- {status} {title}"
@@ -32,7 +32,7 @@
             "name": "simple",
             "groupby_project": " ",
             "groupby_date": " ",
-            "project": "- {status} {title} [↗]({url}) {date} {deadline}",
+            "project": "- {status} {title} [↗]({url}) {date} {deadline_sep} {deadline}",
             "task": "- {status} [[{project}]] {project_sep} {heading} {heading_sep} {title} [↗]({url}) {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "notes": "",
             "checklist_item": ""
@@ -41,7 +41,7 @@
             "name": "projects",
             "groupby_project": "",
             "groupby_date": "",
-            "project": "- {title} [↗]({url}) {date} {deadline} (area::{area}) (taglist::{tags})",
+            "project": "- {title} [↗]({url}) {area_sep} {area} {date_sep} {date} {deadline_sep} {deadline} {tags}",
             "task": "",
             "notes": "",
             "checklist_item": ""
