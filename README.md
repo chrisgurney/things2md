@@ -51,7 +51,7 @@ python3 things2md.py --project "projectname"
 Get completed tasks:
 
 ```shell
-python3 things2md.py --date 2024-03-06
+python3 things2md.py --date "2024-03-06"
 python3 things2md.py --tag "tagname" --range "this week"
 python3 things2md.py --project "projectname" --range "this week"
 ```
@@ -59,7 +59,7 @@ python3 things2md.py --project "projectname" --range "this week"
 List my projects:
 
 ```shell
-python3 things2md.py --projects --template projects
+python3 things2md.py --projects --template "projects"
 ```
 
 <details><summary>More examples</summary>
@@ -69,7 +69,7 @@ python3 things2md.py --projects --template projects
 
 Show tasks completed within the last week, grouped by project, ordered by project:
 ```shell
-python3 things2md.py --range "1 week ago" --groupby project --orderby project
+python3 things2md.py --range "1 week ago" --groupby "project" --orderby "project"
 ```
 
 Show tasks completed today:
@@ -79,12 +79,12 @@ python3 things2md.py --range "today"
 
 Show tasks completed today, and omit subtasks and notes:
 ```shell
-python3 things2md.py --range "today" --template simple
+python3 things2md.py --range "today" --template "simple"
 ```
 
 BETA: Show tasks completed on a specific date (in ISO format). Known issue: I think due to dates being stored in UTC, if the completion date falls near midnight, it may show up if you're querying tasks for the next day.
 ```shell
-python3 things2md.py --date 2024-02-25
+python3 things2md.py --date "2024-02-25"
 ```
 
 Show tasks completed yesterday:
@@ -94,17 +94,17 @@ python3 things2md.py --range "yesterday"
 
 ...and ordered by project, but omit subtasks, notes, and cancelled tasks:
 ```shell
-python3 things2md.py --range "yesterday" --orderby project --template simple
+python3 things2md.py --range "yesterday" --orderby "project" --template "simple"
 ```
 
 Show tasks completed in the last 3 days, and omit subtasks, notes, and cancelled tasks:
 ```shell
-python3 things2md.py --range "3 days ago" --template simple
+python3 things2md.py --range "3 days ago" --template "simple"
 ```
 
 Show tasks completed in the last week, ordered by project, but omit subtasks, notes, and cancelled tasks:
 ```shell
-python3 things2md.py --range "1 week ago" --orderby project --template simple
+python3 things2md.py --range "1 week ago" --orderby "project" --template "simple"
 ```
 
 ## Listing Uncompleted Tasks
