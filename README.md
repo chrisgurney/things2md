@@ -15,7 +15,7 @@ Copy `things2md.json.example` to `things2md.json` and configure if desired (see 
 
 # Usage
 
-Execute `things2md.py` any parameters to see the full list of arguments available:
+Execute `things2md.py` without any parameters to see the full list of arguments available:
 
 ```
   -h, --help            show this help message and exit
@@ -80,7 +80,7 @@ Show tasks completed today, and omit subtasks and notes:
 python3 things2md.py --range "today" --template simple
 ```
 
-BETA: Show tasks completed on a specific date (in ISO format). Potentially fixed: I think due to dates being stored in GMT, if the completion date falls near midnight, it may show up if you're querying tasks for the next day.
+BETA: Show tasks completed on a specific date (in ISO format). Known issue: I think due to dates being stored in UTC, if the completion date falls near midnight, it may show up if you're querying tasks for the next day.
 ```shell
 python3 things2md.py --date 2024-02-25
 ```
@@ -146,7 +146,7 @@ python3 things2md.py --tag "note" --template note
 
 # Configuration + Templates
 
-Copy `things2md.json.example` to `things2md.json`.
+If you haven't already, copy `things2md.json.example` to `things2md.json`.
 
 This file is organized into three sections:
 
@@ -238,11 +238,11 @@ From [things2md.json.example](things2md.json.example), here's a regular type tem
 
 ### Markdown Notes
 
-Sometimes I end up writing a lot in my Things3 tasks. If you're ilke me, the `markdown_note` template type allows you to format tasks (or projects?) as full Markdown note. 
+Sometimes I end up writing a lot in my Things tasks, and would rather just copy/paste it as-is into Obsidian. For this purpose, the `markdown_note` template type allows you to output tasks as formatted Markdown notes. 
 
 For example, using the provided `note` template outputs each individual task as follows:
 
-- the task name become a header;
+- the task name becomes a header;
 - notes become the body text;
 - subtasks follow as a list;
 - and each note is separated by a line (`---`).
