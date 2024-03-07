@@ -263,15 +263,17 @@ This script was initially designed for use within [Obsidian](https://obsidian.md
 
 ## How to do this via the [Shell Commands Plugin](https://github.com/Taitava/obsidian-shellcommands)
 
-Using this plugin, the recommended configuration is as follows:
+Using this plugin, the recommended configuration (i.e., in Obsidian:`Settings... > Shell commands`) is as follows:
 
-1. Add a command per any of the above examples.
+1. Click **New shell command** to add a command, such as any in the above examples.
     - Make sure your path to the things2md.py script is absolute (on my system it's at `/opt/homebrew/bin/python3`).
-1. Click the gear icon for each command, and adjust these settings:
-    - In the _General_ tab, set an alias for the command (e.g., "tasks_today"). You can execute this from a slash command.
-    - In the _Output_ tab, under _Output channel for stdout_ set it to _Current file: caret position_
+1. Click the **gear (⚙️)** icon for each command, and adjust these settings:
+    - In the **General tab**, set an **Alias** for the command (e.g., "tasks_today"). You will be able to execute this from a slash command.
+    - In the **Output tab**, change **Output channel for stdout** to **Current file: caret position**.
 
-That's it! You can now execute it from a slash command within any note, placing the output wherever your cursor is. Alternately, copy the command's URI (using the 🔗 icon under each command) and paste it into a Markdown link; clicking that link will execute the command.
+That's it! You can now execute your command from a slash command within any note, placing the output wherever your cursor is.
+
+Alternately, copy the command's URI (using the link (🔗) icon under each command) and paste it into a Markdown link. Clicking that link will execute the command.
 
 # References
 
