@@ -18,20 +18,22 @@ Copy `things2md.json.example` to `things2md.json` and configure if desired (see 
 Execute `things2md.py` without any parameters to see the full list of arguments available:
 
 ```
-  -h, --help            show this help message and exit
-  --date DATE           Date to get completed tasks for, in ISO format (e.g., 2023-10-07).
-  --debug               If set will show script debug information.
-  --due                 If set will show incomplete tasks with deadlines.
-  --groupby {date,project}
-                        How to group the tasks.
-  --orderby {date,index,project}
-                        How to order the tasks.
-  --project PROJECT     If provided, only tasks for this project are fetched.
-  --projects            If set will show a list of projects only.
-  --range RANGE         Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.
-  --tag TAG             If provided, only uncompleted tasks with this tag are fetched.
-  --template TEMPLATE   Name of the template to use from the configuration.
-  --today               If set will show incomplete tasks in Today.
+-h, --help            show this help message and exit
+--date DATE           Date to get completed tasks for, in ISO format (e.g., 2023-10-07).
+--debug               If set will show script debug information.
+--due                 If set will show incomplete tasks with deadlines.
+--groupby {date,project}
+                      How to group the tasks.
+--orderby {date,index,project}
+                      How to order the tasks.
+--project PROJECT     If provided, only tasks for this project are fetched.
+--projects            If set will show a list of projects only.
+--range RANGE         Relative date range to get completed tasks for (e.g., "today", 
+                      "1 day ago", "1 week ago", "this week" which starts on Monday).
+                      Completed tasks are relative to midnight of the day requested.
+--tag TAG             If provided, only uncompleted tasks with this tag are fetched.
+--template TEMPLATE   Name of the template to use from the configuration.
+--today               If set will show incomplete tasks in Today.
 
 At least one of these arguments is required: date, due, project, projects, range, tag, today
 ```
