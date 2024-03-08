@@ -136,6 +136,7 @@ EMOJI_PATTERN = re.compile("["
                            u"\U0001FA70-\U0001FAFF"
                            u"\U00002702-\U000027B0"
                            u"\U000024C2-\U0001F251"
+                           u"\U000023E9"
                            "]+", flags=re.UNICODE)
 
 # default GCal event times to 9am-9:30am today
