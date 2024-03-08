@@ -248,8 +248,8 @@ def query_projects(first_datetime):
         projects += things.projects(stop_date=f'>{stop_date}', **kwargs)
 
     if ARG_ORDERBY == "project":
-        # FIXME: this won't properly sort projects we've removed emojis from, or upper vs. lower-case titles
-        projects.sort(key=lambda x: x.get("title",""))
+        # FIXME: this won't properly sort projects if we've removed emojis
+        projects.sort(key=lambda x: x.get("title","").casefold())
 
     return projects
 
@@ -338,8 +338,8 @@ def query_tasks(first_datetime, last_datetime = None):
    
     if ARG_ORDERBY == "project":
         tasks.sort(key=lambda x: x['stop_date'] if x['stop_date'] is not None else float('-inf'), reverse=True)
-        # FIXME: this won't properly sort projects we've removed emojis from, or upper vs. lower-case titles
-        tasks.sort(key=lambda x: x.get("project_title",""))
+        # FIXME: this won't properly sort projects if we've removed emojis
+        tasks.sort(key=lambda x: x.get("project_title","").casefold())
     elif ARG_ORDERBY == 'index':
         pass
     elif ARG_DUE:
