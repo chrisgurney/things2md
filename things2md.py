@@ -248,6 +248,21 @@ def query_projects(first_datetime):
         stop_date = first_datetime.strftime("%Y-%m-%d")
         projects += things.projects(stop_date=f'>{stop_date}', **kwargs)
 
+    #
+    # filter projects
+    #
+
+    for project in projects:
+        project['notes'] = filter_notes(project['notes'])
+        if CFG_REMOVE_AREA_EMOJIS and 'area_title' in project:
+            project['area_title'] = filter_area_title(project['area_title'])
+        if CFG_REMOVE_PROJECT_EMOJIS:
+            project['title'] = filter_project_title(project['title'])
+
+    #
+    # order projects based on arguments
+    #
+
     if ARG_ORDERBY == "project":
         projects.sort(key=lambda x: x.get("title","").casefold())
     elif ARG_ORDERBY == "area":
@@ -318,6 +333,18 @@ def query_tasks(first_datetime, last_datetime = None):
         tasks = tasks + next_day_tasks
 
     #
+    # filter tasks
+    #
+
+    for task in tasks:
+        task['notes'] = filter_notes(task['notes'])
+        if CFG_REMOVE_TASK_EMOJIS: task['title'] = filter_task_title(task['title'])
+        if CFG_REMOVE_PROJECT_EMOJIS and 'project_title' in task:
+            task['project_title'] = filter_project_title(task['project_title'])
+        if CFG_REMOVE_HEADING_EMOJIS and 'heading_title' in task:
+            task['heading_title'] = filter_heading_title(task['heading_title'])
+
+    #
     # order + group based on arguments
     #
 
@@ -340,7 +367,6 @@ def query_tasks(first_datetime, last_datetime = None):
    
     if ARG_ORDERBY == "project":
         tasks.sort(key=lambda x: x['stop_date'] if x['stop_date'] is not None else float('-inf'), reverse=True)
-        # FIXME: this won't properly sort projects if we've removed emojis
         tasks.sort(key=lambda x: x.get("project_title","").casefold())
     elif ARG_ORDERBY == 'index':
         pass
@@ -461,10 +487,9 @@ project_results = query_projects(start_datetime)
 if DEBUG: print(f"PROJECTS ({len(project_results)}):")
 for project in project_results:
     if DEBUG: print(dict(project))
-    formatted_project_name = filter_project_title(project['title'])
-    projects[project['uuid']] = formatted_project_name
+    projects[project['uuid']] = project['title']
     if ARG_PROJECT:
-        if ARG_PROJECT in (project['title'], formatted_project_name):
+        if ARG_PROJECT == project['title']:
             ARG_PROJECT_UUID = project['uuid']
 
 if ARG_PROJECT and ARG_PROJECT_UUID is None:
@@ -521,17 +546,17 @@ for task in task_results:
     vars['deadline'] = task['deadline'] if task['deadline'] is not None else ""
     vars['deadline_sep'] = CFG_DEADLINE_SEPARATOR if vars['deadline'] else ""
     vars['gcal_url'] = get_gcal_url(task['uuid'], task['title'])
-    vars['notes'] = filter_notes(task['notes']) if task['notes'] else None
+    vars['notes'] = task['notes'] if task['notes'] else None
     vars['url'] = things.link(task['uuid'])
     vars['status'] = CFG_STATUS_SYMBOLS.get(task['status'], "")
     # TODO: consider other tag list formats (e.g., for frontmatter lists)
     vars['tags'] = "#" + " #".join(task['tags']) if 'tags' in task else ""
-    vars['title'] = filter_task_title(task['title'])
+    vars['title'] = task['title']
     vars['uuid'] = task['uuid']
 
     if task['type'] == "to-do":
 
-        vars['heading'] = filter_heading_title(task['heading_title']) if 'heading_title' in task else ""
+        vars['heading'] = task['heading_title'] if 'heading_title' in task else ""
         vars['heading_sep'] = CFG_HEADING_SEPARATOR if vars['heading'] else ""
         vars['project'] = projects[task['project']] if 'project' in task else ""
 
@@ -570,9 +595,9 @@ for task in task_results:
                 things_skipped[task['uuid']] = dict(task)
                 if DEBUG: print(f"... SKIPPED (AREA TAG): {dict(task)}")
                 continue
-        vars['area'] = filter_area_title(task['area_title']) if 'area_title' in task else ""
+        vars['area'] = task['area_title'] if 'area_title' in task else ""
         vars['area_sep'] = CFG_AREA_SEPARATOR if vars['area'] else ""
-        vars['title'] = filter_project_title(task['title'])
+        vars['title'] = task['title']
 
         # attempt merge with template
         try: 
