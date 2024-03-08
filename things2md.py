@@ -29,8 +29,8 @@ parser = argparse.ArgumentParser(description="Things3 database -> Markdown conve
 parser.add_argument('--date', help='Date to get completed tasks for, in ISO format (e.g., 2023-10-07).', type=datetime.fromisoformat)
 parser.add_argument('--debug', default=False, action='store_true', help='If set will show script debug information.')
 parser.add_argument('--due', default=False, action='store_true', help='If set will show incomplete tasks with deadlines.')
-parser.add_argument('--groupby', choices=['date','project'], help='How to group the tasks.')
-parser.add_argument('--orderby', default='date', choices=['date','index','project'], help='How to order the tasks.')
+parser.add_argument('--groupby', choices=['area', 'date','project'], help='How to group the tasks. Use in conjunction with --orderby')
+parser.add_argument('--orderby', default='date', choices=['area', 'date','index','project'], help='How to order the tasks.')
 parser.add_argument('--project', help='If provided, only tasks for this project are fetched.')
 parser.add_argument('--projects', default=False, action='store_true', help='If set will show a list of projects only.')
 parser.add_argument('--range', help='Relative date range to get completed tasks for (e.g., "today", "1 day ago", "1 week ago", "this week" which starts on Monday). Completed tasks are relative to midnight of the day requested.')
@@ -249,8 +249,9 @@ def query_projects(first_datetime):
         projects += things.projects(stop_date=f'>{stop_date}', **kwargs)
 
     if ARG_ORDERBY == "project":
-        # FIXME: this won't properly sort projects if we've removed emojis
         projects.sort(key=lambda x: x.get("title","").casefold())
+    elif ARG_ORDERBY == "area":
+        projects.sort(key=lambda x: x.get("area_title","").casefold())
 
     return projects
 
@@ -488,6 +489,7 @@ else:
 things_outputted = []
 things_skipped = {}
 
+header_area_previous = "PROJECTAREAPREVIOUS"
 header_date_previous = ""
 header_project_previous = "TASKPROJECTPREVIOUS"
 
@@ -607,6 +609,14 @@ for task in task_results:
                 sys.stderr.write(f"things2md: Invalid groupby_project template variable: '{e.args[0]}'.")
                 exit(1)
             header_project_previous = vars['project']
+    elif ARG_GROUPBY == "area" and CFG_TEMPLATE.get("groupby_area"):
+        if 'area' in vars and vars['area'] != header_area_previous:
+            try:
+                print(CFG_TEMPLATE.get("groupby_area").format(**vars))
+            except KeyError as e:
+                sys.stderr.write(f"things2md: Invalid groupby_area template variable: '{e.args[0]}'.")
+                exit(1)
+            header_area_previous = vars['area']
 
     #
     # output
