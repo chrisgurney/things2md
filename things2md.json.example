@@ -4,6 +4,7 @@
         "remove_heading_emojis": false,
         "remove_project_emojis": true,
         "remove_task_emojis": false,
+        "remove_empty_checklist_items": false,
         "skip_tags": ["personal", "pers", "ignore"]
     },
     "formatting": {

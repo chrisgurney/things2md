@@ -160,8 +160,9 @@ This file is organized into three sections:
 
 Filters effectively define transformations that happen on data extracted from Things3 before being output to Markdown.
 
-- `skip_tags` defines a list of tags that, if your task/project has a tag in this list, or your project is in an area that has a tag in this list, that task/project will **not** be output.
 - `remove_*_emojis` are flags which, if set to `true`, will remove emojis after these are extracted from the Things3 database.
+- `remove_empty_checklist_items` set `true` if you want to omit empty checklist items. Default: `false`.
+- `skip_tags` defines a list of tags that, if your task/project has a tag in this list, or your project is in an area that has a tag in this list, that task/project will **not** be output.
 
 ## Formatting
 

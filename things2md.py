@@ -84,6 +84,7 @@ if _cfg_filters := CONFIG.get("filters"):
     CFG_REMOVE_HEADING_EMOJIS = _cfg_filters.get("remove_heading_emojis")
     CFG_REMOVE_PROJECT_EMOJIS = _cfg_filters.get("remove_project_emojis")
     CFG_REMOVE_TASK_EMOJIS = _cfg_filters.get("remove_task_emojis")
+    CFG_REMOVE_EMPTY_CHECKLIST_ITEMS = _cfg_filters.get("remove_empty_checklist_items") if _cfg_filters.get("remove_empty_checklist_items") else False
     CFG_SKIP_TAGS = _cfg_filters.get("skip_tags")
 
 if _cfg_formatting := CONFIG.get("formatting"):
@@ -577,8 +578,10 @@ for task in task_results:
             if 'checklist' in task and task['checklist']:
                 for checklist_item in task.get('checklist'):
                     checklist_item_vars = {}
-                    checklist_item_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], "")
+                    if CFG_REMOVE_EMPTY_CHECKLIST_ITEMS and not checklist_item['title']:
+                        continue
                     checklist_item_vars['title'] = checklist_item['title']
+                    checklist_item_vars['status'] = CFG_STATUS_SYMBOLS.get(checklist_item['status'], "")
                     if checklist_md: checklist_md += "\n"
                     if CFG_TEMPLATE.get("checklist_item"):
                         checklist_md += CFG_TEMPLATE.get("checklist_item").format(**checklist_item_vars)
