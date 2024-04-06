@@ -20,7 +20,7 @@ You should see output: e.g., `Python 3.11.6`
 
 - You may have to update Python to a newer version, if you run into issues running `things2md` (see later steps). I’m not actually sure what the actual minimum requirement is. Let me know how it works for you!
 
-Get the latest release zip file (just updated to v2.0.1):
+Get the latest release zip file:
 1. On this page: https://github.com/chrisgurney/things2md/releases
 2. Download the `Source code (zip)` file for the latest version.
 
