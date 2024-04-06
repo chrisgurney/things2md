@@ -9,9 +9,40 @@
 
 # Installation
 
-`pip3 install -r requirements.txt`
+These instructions should work on macOS. For Windows, I would be interested in your experience, so I can make tweaks if necessary.
 
-Copy `things2md.json.example` to `things2md.json` and configure if desired (see below).
+In a terminal, confirm Python is in your path by running:
+```
+python3 --version
+```
+
+You should see output: e.g., `Python 3.11.6`
+
+- You may have to update Python to a newer version, if you run into issues running `things2md` (see later steps). I’m not actually sure what the actual minimum requirement is. Let me know how it works for you!
+
+Get the latest release zip file (just updated to v2.0.1):
+1. On this page: https://github.com/chrisgurney/things2md/releases
+2. Download the `Source code (zip)` file for the latest version.
+
+Unzip the file somewhere you intend to run it from (doesn’t matter where).
+
+In a terminal, go to the folder you unzipped it to and run:
+```
+pip3 install -r requirements.txt
+```
+
+Copy `things2md.json.example` to `things2md.json`
+
+- I recommend trying to run it without changing it first, to see if the output suits your needs as-is.
+
+Try running (example):
+```
+python3 things2md.py --today
+```
+
+…which should list out the tasks in your Today list.
+
+Review the documentation and change your `things2md.json` as desired.
 
 # Usage
 
