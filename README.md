@@ -9,8 +9,6 @@
 
 # Installation
 
-These instructions should work on macOS. For Windows, I would be interested in your experience, so I can make tweaks if necessary.
-
 In a terminal, confirm Python is in your path by running:
 ```
 python3 --version
