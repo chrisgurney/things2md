@@ -25,7 +25,12 @@ Get the latest release zip file:
 Unzip the file somewhere you intend to run it from (doesn’t matter where).
 
 In a terminal, go to the folder you unzipped it to and run:
+```zsh
+pip3 install -r requirements.txt
 ```
+or if using a virtual environment:
+```zsh
+source /path/to/.venv/bin/activate
 pip3 install -r requirements.txt
 ```
 
@@ -34,7 +39,7 @@ Copy `things2md.json.example` to `things2md.json`
 - I recommend trying to run it without changing it first, to see if the output suits your needs as-is.
 
 Try running (example):
-```
+```zsh
 python3 things2md.py --today
 ```
 
@@ -296,8 +301,18 @@ This script was initially designed for use within [Obsidian](https://obsidian.md
 Using this plugin, the recommended configuration (i.e., in Obsidian:`Settings... > Shell commands`) is as follows:
 
 1. Click **New shell command** to add a command, such as any in the above examples.
-    - What works for me is to make sure your path to the Python binary is absolute. For example: `/opt/homebrew/bin/python3 ~/Development/things2md/things2md.py --today`
-1. Click the **gear (⚙️)** icon for each command, and adjust these settings:
+
+What works for me is to make sure your path to the Python binary is absolute. For example:
+```zsh
+/opt/homebrew/bin/python3 ~/Development/things2md/things2md.py --today
+```
+
+If using a virtual environment:
+```zsh
+source /path/to/things2md/.venv/bin/activate && python3 /path/to/things2md/things2md.py --today
+```
+
+2. Click the **gear (⚙️)** icon for each command, and adjust these settings:
     - In the **General tab**, set an **Alias** for the command (e.g., "tasks_today"). You will be able to execute this from a slash command.
     - In the **Output tab**, change **Output channel for stdout** to **Current file: caret position**.
 
