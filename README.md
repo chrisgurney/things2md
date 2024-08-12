@@ -302,7 +302,7 @@ This script was initially designed for use within [Obsidian](https://obsidian.md
 
 Using this plugin, the recommended configuration (i.e., in Obsidian:`Settings... > Shell commands`) is as follows:
 
-1. Click **New shell command** to add a command, such as any in the above examples.
+### 1. Click **New shell command** to add a command, such as any in the above examples.
 
 What works for me is to make sure your path to the Python binary is absolute. For example:
 ```zsh
@@ -314,9 +314,10 @@ If using a virtual environment:
 source /path/to/things2md/.venv/bin/activate && python3 /path/to/things2md/things2md.py --today
 ```
 
-2. Click the **gear (⚙️)** icon for each command, and adjust these settings:
-    - In the **General tab**, set an **Alias** for the command (e.g., "tasks_today"). You will be able to execute this from a slash command.
-    - In the **Output tab**, change **Output channel for stdout** to **Current file: caret position**.
+### 2. Click the **gear (⚙️)** icon for each command, and adjust these settings:
+
+- In the **General tab**, set an **Alias** for the command (e.g., "tasks_today"). You will be able to execute this from a slash command.
+- In the **Output tab**, change **Output channel for stdout** to **Current file: caret position**.
 
 That's it! You can now execute your command from a slash command within any note, placing the output wherever your cursor is.
 
