@@ -28,9 +28,11 @@ In a terminal, go to the folder you unzipped it to and run:
 ```zsh
 pip3 install -r requirements.txt
 ```
-or if using a virtual environment:
+...or if using a virtual environment:
 ```zsh
-source /path/to/.venv/bin/activate
+cd /path/to/things2md/
+python3 -m venv .venv
+source .venv/bin/activate
 pip3 install -r requirements.txt
 ```
 
