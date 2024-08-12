@@ -218,7 +218,7 @@ def query_areas():
     Fetches areas.
     '''
     kwargs = dict()
-    if DEBUG: kwargs['print_sql'] = True; print("\AREAS QUERY:")
+    if DEBUG: kwargs['print_sql'] = True; print("\nAREAS QUERY:")
 
     try:
         areas = things.areas(**kwargs)
