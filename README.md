@@ -47,7 +47,7 @@ python3 things2md.py --today
 
 …which should list out the tasks in your Today list.
 
-Review the documentation and change your `things2md.json` as desired.
+Review the [configuration docs](#configuration--templates) below and change your `things2md.json` as desired.
 
 # Usage
 
