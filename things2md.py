@@ -194,13 +194,17 @@ def get_datetime_range(date_range):
 
     return start_date, end_date
 
-def has_skip_tags(tags_to_check):
+def has_skip_tags(task):
     '''
-    Returns True if any of the tags in the list provided is in ENV_SKIP_TAGS.
+    Returns True if any of the tags in the given task/project/area is in ENV_SKIP_TAGS.
     '''
     skip = False
     if CFG_SKIP_TAGS:
-        if any(item in tags_to_check for item in CFG_SKIP_TAGS):
+        if ('area' in task) and any(item in areas[task['area']].get('tags', []) for item in CFG_SKIP_TAGS):
+            skip = True
+        elif ('project' in task) and any(item in projects[task['project']].get('tags', []) for item in CFG_SKIP_TAGS):
+            skip = True
+        elif ('tags' in task) and any(item in task['tags'] for item in CFG_SKIP_TAGS):
             skip = True
     return skip
 
@@ -488,7 +492,7 @@ project_results = query_projects(start_datetime)
 if DEBUG: print(f"PROJECTS ({len(project_results)}):")
 for project in project_results:
     if DEBUG: print(dict(project))
-    projects[project['uuid']] = project['title']
+    projects[project['uuid']] = project
     if ARG_PROJECT:
         if ARG_PROJECT == project['title']:
             ARG_PROJECT_UUID = project['uuid']
@@ -524,7 +528,7 @@ if DEBUG: print(f"\nTASKS ({len(task_results)}):")
 for task in task_results:
 
     # skip this task if requested
-    if 'tags' in task and has_skip_tags(task['tags']):
+    if has_skip_tags(task):
         things_skipped[task['uuid']] = dict(task)
         if DEBUG: print(f"... SKIPPED (TAG): {dict(task)}")
         continue
@@ -559,7 +563,7 @@ for task in task_results:
 
         vars['heading'] = task['heading_title'] if 'heading_title' in task else ""
         vars['heading_sep'] = CFG_HEADING_SEPARATOR if vars['heading'] else ""
-        vars['project'] = projects[task['project']] if 'project' in task else ""
+        vars['project'] = projects[task['project']]['title'] if 'project' in task else ""
 
         # if this task has a heading, we have to get the project name from the heading's task
         if not vars['project'] and ('heading' in task) and (heading_task := things.tasks(uuid=task['heading'])):
@@ -594,7 +598,7 @@ for task in task_results:
 
         # skip if project's area has SKIP_TAGS
         if 'area' in task:
-            if has_skip_tags(areas[task['area']].get('tags', [])):
+            if has_skip_tags(task):
                 things_skipped[task['uuid']] = dict(task)
                 if DEBUG: print(f"... SKIPPED (AREA TAG): {dict(task)}")
                 continue
