@@ -12,6 +12,7 @@ import sys
 import urllib.parse
 from datetime import datetime
 from dateutil.relativedelta import *
+import sqlite3
 import things
 
 THINGS2MD_CONFIG_FILE = './things2md.json'
@@ -157,6 +158,16 @@ TODAY_TIMESTAMP = datetime(TODAY.year, TODAY.month, TODAY.day).timestamp()
 # #############################################################################
 # FUNCTIONS
 # #############################################################################
+
+def check_database_access():
+    try:
+        things.token()
+    except sqlite3.OperationalError:
+        sys.stderr.write(
+            'things2md: Unable to access the Things 3 database. '
+            'Check permissions.\n'
+        )
+        sys.exit(1)
 
 def get_datetime_range(date_range):
     '''
@@ -478,6 +489,8 @@ if DEBUG: print(f"\nTODAY: {TODAY}, TODAY_DATE: {TODAY_DATE}, TODAY_INT: {TODAY_
 #
 # Get Areas + Projects
 #
+
+check_database_access()
 
 # get area names
 areas = dict()
