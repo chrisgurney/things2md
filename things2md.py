@@ -628,7 +628,7 @@ for task in task_results:
 
     elif task['type'] == "heading":
         # TODO: do something for --project output
-        pass
+        continue
 
     else:
         # areas?
